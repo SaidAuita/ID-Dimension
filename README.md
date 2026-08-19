@@ -1,7 +1,6 @@
 # ID Dimension
 
-![ID Dimension Interface](images/ID_Dimension_cover.png) 
-*(Note: Please add a cover image named `ID_Dimension_cover.png` to the `images` folder)*
+![ID Dimension Interface](images/ID_Dimension.png)
 
 *( 🇬🇧 [English](#english) | 🇷🇺 [Русский](#русский) )*
 
