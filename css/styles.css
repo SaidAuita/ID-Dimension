@@ -1,0 +1,195 @@
+/* Basic Reset */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.panel-container {
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Measurements Layout */
+.measurements-block {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 15px; /* space between diam, cross, and rad */
+}
+
+.cross-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.cross-middle {
+    display: flex;
+    gap: 4px;
+}
+
+/* Hide number input spinners */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+.icon-btn {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+}
+
+/* Settings Layout */
+.settings-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+}
+
+.prop-label {
+    width: 45px;
+    text-align: right;
+    margin-right: 2px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.checkbox-label input {
+    margin: 0;
+}
+
+.hostInput {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    color: inherit;
+    padding: 2px 4px;
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 11px;
+    outline: none;
+    height: 20px;
+}
+.hostInput:focus {
+    border-color: #2680eb;
+}
+
+.num-input {
+    width: 45px;
+}
+
+.text-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.select-input {
+    width: 55px;
+    padding: 0;
+}
+
+.cmyk-input {
+    width: 35px; /* Slightly wider so 100 fits comfortably */
+}
+
+/* Buttons */
+.hostButton {
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: rgba(128, 128, 128, 0.1);
+    color: inherit;
+    cursor: pointer;
+    border-radius: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background 0.1s;
+    height: 20px;
+}
+.hostButton:hover {
+    background: rgba(128, 128, 128, 0.3);
+}
+.hostButton:active {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* The measurement cross and icon buttons are slightly larger */
+.icon-btn {
+    height: 26px;
+}
+
+.hostButton svg {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+}
+
+/* Colors */
+.color-swatches-row {
+    margin-top: 2px;
+    gap: 4px;
+}
+.color-swatch {
+    flex: 1;
+    height: 16px;
+    border-radius: 2px;
+    border: 1px solid rgba(128, 128, 128, 0.6);
+    cursor: pointer;
+}
+.color-swatch:hover {
+    opacity: 0.8;
+}
+
+.checkboxes-row {
+    margin-top: 4px;
+    gap: 15px;
+}
+
+/* Presets */
+.preset-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 4px;
+}
+.preset-btn {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 600;
+}
+.preset-btn.active-preset {
+    color: #ffa98a !important;
+}

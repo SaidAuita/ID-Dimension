@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link id="hostStyle" rel="stylesheet" href="css/styles.css"/>
+    <title>ID Dimension v1.10</title>
+</head>
+<body class="hostElt">
+
+<div class="panel-container">
+
+    <!-- MEASUREMENT BUTTONS -->
+    <div class="measurements-block">
+        <button id="btn_diam" class="hostButton icon-btn" title="Diameter">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M6 18l12-12"/></svg>
+        </button>
+
+        <div class="cross-layout">
+            <button id="btn_top" class="hostButton icon-btn" title="Top Dimension (Ctrl for 2 objects)">
+                <svg viewBox="0 0 24 24"><path d="M12 4v16m-4-12l4-4 4 4"/></svg>
+            </button>
+            <div class="cross-middle">
+                <button id="btn_left" class="hostButton icon-btn" title="Left Dimension">
+                    <svg viewBox="0 0 24 24"><path d="M4 12h16m-12-4l-4 4 4 4"/></svg>
+                </button>
+                <button id="btn_cent" class="hostButton icon-btn" title="Center Point">
+                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-dasharray="2,2"/></svg>
+                </button>
+                <button id="btn_right" class="hostButton icon-btn" title="Right Dimension">
+                    <svg viewBox="0 0 24 24"><path d="M20 12H4m12 4l4-4-4-4"/></svg>
+                </button>
+            </div>
+            <button id="btn_bott" class="hostButton icon-btn" title="Bottom Dimension">
+                <svg viewBox="0 0 24 24"><path d="M12 20V4m4 12l-4 4-4-4"/></svg>
+            </button>
+        </div>
+        
+        <button id="btn_rad" class="hostButton icon-btn" title="Radius">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M12 12l6-6"/></svg>
+        </button>
+    </div>
+
+    <!-- COMPACT SETTINGS -->
+    <div class="settings-block">
+        
+        <div class="row">
+            <label class="checkbox-label"><input type="checkbox" id="add_mm"/> unit</label>
+            <label class="checkbox-label"><input type="checkbox" id="add_layer"/> layer:</label>
+            <input type="text" id="layer_name_text" class="hostInput text-input" value="layout"/>
+        </div>
+
+        <div class="row">
+            <label class="prop-label">length:</label>
+            <input type="number" id="line_len" class="hostInput num-input" step="1" value="10"/>
+            <label class="prop-label">precis:</label>
+            <select class="hostInput select-input" id="precis">
+                <option value="0">0</option>
+                <option value="1">0.0</option>
+                <option value="2" selected>0.00</option>
+                <option value="3">0.000</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label class="prop-label">stroke:</label>
+            <input type="number" id="line_stroke" class="hostInput num-input" step="0.05" value="0.2"/>
+            <label class="prop-label">gap:</label>
+            <input type="number" id="gap" class="hostInput num-input" step="0.5" value="0.5"/>
+        </div>
+
+        <div class="row">
+            <label class="prop-label">indent:</label>
+            <input type="number" id="line_indent" class="hostInput num-input" step="0.5" value="1.0"/>
+            <label class="prop-label">arrow:</label>
+            <input type="number" id="arrow_width" class="hostInput num-input" step="0.5" value="3.5"/>
+        </div>
+
+        <div class="row">
+            <label class="prop-label">font size:</label>
+            <input type="number" id="font_size" class="hostInput num-input" step="1" value="14"/>
+            <label class="prop-label">units:</label>
+            <select class="hostInput select-input" id="unit_select" style="min-width: 50px; margin-left: 5px;">
+                <option value="mm" selected>mm</option>
+                <option value="cm">cm</option>
+                <option value="in">in</option>
+                <option value="pt">pt</option>
+                <option value="px">px</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <div class="prop-label" style="display:flex; align-items:center; justify-content:flex-end;">
+                <span style="margin-right:4px;">color:</span>
+                <div id="current_color_preview" style="width:10px; height:12px; border:1px solid rgba(128,128,128,0.6); border-radius:1px; background-color: #000;"></div>
+            </div>
+            <input type="number" id="cyan" class="hostInput cmyk-input" min="0" max="100" step="10" value="0" title="Cyan"/>
+            <input type="number" id="magenta" class="hostInput cmyk-input" min="0" max="100" step="10" value="0" title="Magenta"/>
+            <input type="number" id="yellow" class="hostInput cmyk-input" min="0" max="100" step="10" value="0" title="Yellow"/>
+            <input type="number" id="black" class="hostInput cmyk-input" min="0" max="100" step="10" value="100" title="Black"/>
+        </div>
+
+        <div class="row color-swatches-row">
+            <div class="color-swatch" id="swatch_0" data-index="0" title="Preset 1 (White)"></div>
+            <div class="color-swatch" id="swatch_1" data-index="1" title="Preset 2 (Black)"></div>
+            <div class="color-swatch" id="swatch_2" data-index="2" title="Preset 3 (Red)"></div>
+            <div class="color-swatch" id="swatch_3" data-index="3" title="Preset 4 (Yellow)"></div>
+            <div class="color-swatch" id="swatch_4" data-index="4" title="Preset 5 (Green)"></div>
+            <div class="color-swatch" id="swatch_5" data-index="5" title="Preset 6 (Blue)"></div>
+        </div>
+
+        <div class="row checkboxes-row" style="justify-content: space-between;">
+            <label class="checkbox-label" title="Position dimensions outside active page/spread">
+                <input type="checkbox" id="out_artboard"/> out page
+            </label>
+            <div style="display: flex; align-items: center;">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="chk_save"/> save
+                </label>
+                <button class="hostButton" id="btn_default" style="margin-left: 10px; padding: 1px 6px; font-size: 10px;" title="Restore default settings">default</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PRESETS -->
+    <div class="preset-row">
+        <button class="hostButton preset-btn" id="btn_preset_min">min</button>
+        <button class="hostButton preset-btn" id="btn_preset_med">med</button>
+        <button class="hostButton preset-btn" id="btn_preset_max">max</button>
+    </div>
+
+</div>
+
+<script src="js/libs/CSInterface.js"></script>
+<script src="js/themeManager.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/colors.js"></script>
+<script src="js/presets.js"></script>
+<script src="js/measurements.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>

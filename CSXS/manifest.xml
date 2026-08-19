@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionManifest
+        Version="7.0"
+        ExtensionBundleId="com.iddimension.v110"
+        ExtensionBundleVersion="1.1.0"
+        ExtensionBundleName="ID Dimension"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Author>
+        <![CDATA[ID Dimension Developer]]>
+    </Author>
+    <Contact mailto="">
+        <![CDATA[]]>
+    </Contact>
+    <Legal>
+        <![CDATA[]]>
+    </Legal>
+    <Abstract href="">
+        <![CDATA[
+        Add linear measurements (dimensions), radius, diameter, center of selected objects in Adobe InDesign
+        ]]>
+    </Abstract>
+
+    <ExtensionList>
+        <Extension Id="com.iddimension.v110" Version="1.1.0"/>
+    </ExtensionList>
+
+    <ExecutionEnvironment>
+        <HostList>
+            <Host Name="IDSN" Version="[9.0,99.9]"/>
+        </HostList>
+        <LocaleList>
+            <Locale Code="All"/>
+        </LocaleList>
+        <RequiredRuntimeList>
+            <RequiredRuntime Name="CSXS" Version="7.0"/>
+        </RequiredRuntimeList>
+    </ExecutionEnvironment>
+
+    <DispatchInfoList>
+        <Extension Id="com.iddimension.v110">
+            <DispatchInfo>
+                <Resources>
+                    <MainPath>./index.html</MainPath>
+                    <ScriptPath>./js/dimensions.js</ScriptPath>
+                </Resources>
+                <Lifecycle>
+                    <AutoVisible>true</AutoVisible>
+                </Lifecycle>
+                <UI>
+                    <Type>Panel</Type>
+                    <Menu>ID Dimension v1.10</Menu>
+                    <Geometry>
+                        <Size>
+                            <Height>380</Height>
+                            <Width>225</Width>
+                        </Size>
+                        <MinSize>
+                            <Height>280</Height>
+                            <Width>215</Width>
+                        </MinSize>
+                        <MaxSize>
+                            <Height>600</Height>
+                            <Width>600</Width>
+                        </MaxSize>
+                    </Geometry>
+                    <Icons>
+                        <Icon Type="Normal">./icons/iconNormal.png</Icon>
+                        <Icon Type="RollOver">./icons/iconRollover.png</Icon>
+                        <Icon Type="Disabled">./icons/iconDisabled.png</Icon>
+                        <Icon Type="DarkNormal">./icons/iconDarkNormal.png</Icon>
+                        <Icon Type="DarkRollOver">./icons/iconDarkRollover.png</Icon>
+                    </Icons>
+                </UI>
+            </DispatchInfo>
+        </Extension>
+    </DispatchInfoList>
+
+</ExtensionManifest>

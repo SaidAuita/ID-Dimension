@@ -1,0 +1,89 @@
+========================================================================
+             ID DIMENSION PLUGIN INSTALLATION GUIDE
+========================================================================
+[Scroll down for Russian / Инструкция на русском языке ниже]
+
+The plugin supports Adobe InDesign versions CC 2014 – 2026+.
+
+------------------------------------------------------------------------
+STEP 1. ENABLE DEBUG MODE (PlayerDebugMode)
+------------------------------------------------------------------------
+To run unsigned CEP plugins, you must enable debug mode in the Windows registry.
+
+1. Run the `enable_player_debug_mode.reg` file by double-clicking it.
+2. Confirm adding the changes to the registry by clicking "Yes" -> "OK".
+
+(This step adds the value "PlayerDebugMode"="1" to the registry key 
+HKCU\Software\Adobe\CSXS.* for all InDesign versions from CC to 2026+).
+
+------------------------------------------------------------------------
+STEP 2. COPY THE PLUGIN FILES
+------------------------------------------------------------------------
+Copy the `ID Dimension` folder (which contains the CSXS, js, css folders, 
+index.html file, etc.) into the user profile directory:
+
+%APPDATA%\Adobe\CEP\extensions\
+
+For quick access:
+1. Press Win + R
+2. Paste the path: %APPDATA%\Adobe\CEP\extensions
+3. Press Enter, and copy the `ID Dimension` folder into the opened window.
+
+IMPORTANT: Install the plugin specifically in this path. If installed globally 
+(e.g., in Program Files), the automatic saving of settings and colors 
+may not work!
+
+------------------------------------------------------------------------
+STEP 3. LAUNCH THE PLUGIN IN ADOBE INDESIGN
+------------------------------------------------------------------------
+1. Launch or restart Adobe InDesign.
+2. In the top menu, open:
+   Window -> Extensions -> ID Dimension
+   or in newer versions:
+   Window -> Extensions (Legacy) -> ID Dimension.
+
+========================================================================
+           ИНСТРУКЦИЯ ПО УСТАНОВКЕ ПЛАГИНА ID DIMENSION
+========================================================================
+
+Плагин поддерживает версии Adobe InDesign CC 2014 – 2026+.
+
+------------------------------------------------------------------------
+ШАГ 1. ВКЛЮЧЕНИЕ РЕЖИМА ОТЛАДКИ (PlayerDebugMode)
+------------------------------------------------------------------------
+Для запуска неподписанных CEP-плагинов требуется включить режим отладки 
+в реестре Windows.
+
+1. Запустите файл `enable_player_debug_mode.reg` двойным кликом мыши.
+2. Подтвердите добавление изменений в реестр, нажав "Да" -> "ОК".
+
+(Этот шаг вносит значение "PlayerDebugMode"="1" в раздел реестра 
+HKCU\Software\Adobe\CSXS.* для всех версий InDesign от CC до 2026+).
+
+------------------------------------------------------------------------
+ШАГ 2. КОПИРОВАНИЕ ФАЙЛОВ ПЛАГИНА
+------------------------------------------------------------------------
+Скопируйте папку `ID Dimension` (в которой находятся папки CSXS, js, 
+css, файл index.html и т.д.) в директорию профиля пользователя:
+
+%APPDATA%\Adobe\CEP\extensions\
+
+Для быстрого перехода:
+1. Нажмите Win + R
+2. Вставьте путь: %APPDATA%\Adobe\CEP\extensions
+3. Нажмите Enter, и скопируйте папку `ID Dimension` туда.
+
+ВАЖНО: Устанавливайте плагин именно по этому пути. Если установить его 
+в Program Files, функция автоматического сохранения настроек и цветов 
+может не работать!
+
+------------------------------------------------------------------------
+ШАГ 3. ЗАПУСК ПЛАГИНА В ADOBE INDESIGN
+------------------------------------------------------------------------
+1. Запустите или перезапустите Adobe InDesign.
+2. В верхнем меню откройте:
+   "Окно" -> "Расширения" -> "ID Dimension"
+   или в более новых версиях:
+   "Окно" -> "Расширения (устаревшие)" -> "ID Dimension"
+
+========================================================================
