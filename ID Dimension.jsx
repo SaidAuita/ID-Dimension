@@ -682,6 +682,8 @@
         }
     };
 
+    $.global.idDimensionEngine = Engine;
+
     // --- Build ScriptUI Window ---
     var win = new Window("palette", "ID Dimension", undefined, { resizeable: false });
     $.global.idDimensionPalette = win;
@@ -936,9 +938,7 @@
             return;
         }
         try {
-            app.doScript(function () {
-                Engine.deleteAll();
-            }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
+            app.doScript("$.global.idDimensionEngine.deleteAll();", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
         } catch (e) {
             Engine.deleteAll();
         }
@@ -1008,14 +1008,12 @@
                 outArtboard: ui.out_artboard
             };
 
-            function doExecute() {
-                Engine.run(opts);
-            }
+            var optsStr = stringifyJSON(opts);
 
             try {
-                app.doScript(doExecute, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension: " + type);
+                app.doScript("$.global.idDimensionEngine.run(" + optsStr + ");", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension: " + type);
             } catch (e1) {
-                doExecute();
+                Engine.run(opts);
             }
 
         } catch (err) {

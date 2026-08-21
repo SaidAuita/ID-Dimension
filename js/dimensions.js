@@ -612,17 +612,36 @@ var IDMeasurement = (function () {
     };
 })();
 
+$.global.IDMeasurement = IDMeasurement;
+
+function stringifyJSON(obj) {
+    if (typeof obj === 'string') return obj;
+    var t = typeof obj;
+    if (t !== "object" || obj === null) {
+        if (t === "string") return '"' + obj.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+        return String(obj);
+    }
+    var json = [], isArr = (obj && obj.constructor === Array);
+    for (var k in obj) {
+        if (obj.hasOwnProperty(k)) {
+            var v = obj[k];
+            var vt = typeof v;
+            if (vt === "string") v = '"' + v.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+            else if (vt === "object" && v !== null) v = stringifyJSON(v);
+            json.push((isArr ? "" : '"' + k + '":') + String(v));
+        }
+    }
+    return (isArr ? "[" : "{") + String(json) + (isArr ? "]" : "}");
+}
+
 // --- Expose Global Functions for Panel CSInterface ---
 function measAllSelect(u) {
-    var res = "[]";
+    var uStr = stringifyJSON(u);
     try {
-        app.doScript(function () {
-            res = IDMeasurement.run(u);
-        }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension");
+        return app.doScript("$.global.IDMeasurement.run(" + uStr + ");", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension");
     } catch (e) {
-        res = IDMeasurement.run(u);
+        return IDMeasurement.run(u);
     }
-    return res;
 }
 
 function delMeasByName(name) {
@@ -630,13 +649,9 @@ function delMeasByName(name) {
 }
 
 function delAllMeasurements() {
-    var count = 0;
     try {
-        app.doScript(function () {
-            count = IDMeasurement.deleteAll();
-        }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
+        return app.doScript("$.global.IDMeasurement.deleteAll();", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
     } catch (e) {
-        count = IDMeasurement.deleteAll();
+        return IDMeasurement.deleteAll();
     }
-    return count;
 }
