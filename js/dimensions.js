@@ -2,7 +2,6 @@
  * ID Dimension - Backend ExtendScript for Adobe InDesign (ES3 Compatible)
  * Creates measurement lines: height, width, center, radius, diameter for selected objects.
  */
-#targetengine "id_dimension_engine"
 //@target indesign
 
 var IDMeasurement = (function () {
@@ -555,11 +554,11 @@ var IDMeasurement = (function () {
 
                 var res = [];
                 if (sel.length === 2 && u.ctrl === true) {
-                    if (sel[0].name && sel[0].name.match(/\d{7}/)) return JSON.stringify([]);
-                    if (sel[1].name && sel[1].name.match(/\d{7}/)) return JSON.stringify([]);
+                    if (sel[0].name && sel[0].name.match(/\d{7}/)) return "[]";
+                    if (sel[1].name && sel[1].name.match(/\d{7}/)) return "[]";
                     var name2 = executeMeasure(doc, u, -1);
                     if (name2) res.push(name2);
-                    return JSON.stringify(res);
+                    return stringifyJSON(res);
                 }
 
                 for (var i = 0; i < sel.length; i++) {
@@ -567,7 +566,7 @@ var IDMeasurement = (function () {
                     var nameSingle = executeMeasure(doc, u, i);
                     if (nameSingle) res.push(nameSingle);
                 }
-                return JSON.stringify(res);
+                return stringifyJSON(res);
 
             } finally {
                 app.scriptPreferences.measurementUnit = origUnit;
@@ -613,8 +612,6 @@ var IDMeasurement = (function () {
     };
 })();
 
-$.global.IDMeasurement = IDMeasurement;
-
 function stringifyJSON(obj) {
     if (typeof obj === 'string') return obj;
     var t = typeof obj;
@@ -635,23 +632,51 @@ function stringifyJSON(obj) {
     return (isArr ? "[" : "{") + String(json) + (isArr ? "]" : "}");
 }
 
+function parseJSON(str) {
+    if (!str || typeof str !== "string") return null;
+    try {
+        return eval("(" + str + ")");
+    } catch (e) {
+        return null;
+    }
+}
+
+function _doMeas(param) {
+    return IDMeasurement.run(param);
+}
+
+function _doDeleteAll() {
+    return IDMeasurement.deleteAll();
+}
+
+function _doDeleteByName(name) {
+    return IDMeasurement.deleteByName(name);
+}
+
 // --- Expose Global Functions for Panel CSInterface ---
 function measAllSelect(u) {
-    var uStr = stringifyJSON(u);
+    if (typeof u === 'string') {
+        var parsed = parseJSON(u);
+        if (parsed) u = parsed;
+    }
     try {
-        return app.doScript("$.global.IDMeasurement.run(" + uStr + ");", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension");
+        return app.doScript(_doMeas, ScriptLanguage.JAVASCRIPT, [u], UndoModes.ENTIRE_SCRIPT, "ID Dimension");
     } catch (e) {
         return IDMeasurement.run(u);
     }
 }
 
 function delMeasByName(name) {
-    return IDMeasurement.deleteByName(name);
+    try {
+        return app.doScript(_doDeleteByName, ScriptLanguage.JAVASCRIPT, [name], UndoModes.ENTIRE_SCRIPT, "Delete ID Dimension");
+    } catch (e) {
+        return IDMeasurement.deleteByName(name);
+    }
 }
 
 function delAllMeasurements() {
     try {
-        return app.doScript("$.global.IDMeasurement.deleteAll();", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
+        return app.doScript(_doDeleteAll, ScriptLanguage.JAVASCRIPT, [], UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
     } catch (e) {
         return IDMeasurement.deleteAll();
     }
