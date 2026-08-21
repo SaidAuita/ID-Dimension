@@ -686,6 +686,7 @@
 
     // --- Build ScriptUI Window ---
     var win = new Window("palette", "ID Dimension v1.2", undefined, { resizeable: false });
+    win.text = "ID Dimension v1.2";
     $.global.idDimensionPalette = win;
 
     win.orientation = "column";
