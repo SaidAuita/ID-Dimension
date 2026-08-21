@@ -540,10 +540,10 @@ var IDMeasurement = (function () {
     // --- Public API ---
     return {
         run: function (u) {
-            if (app.documents.length === 0) return JSON.stringify([]);
+            if (app.documents.length === 0) return "[]";
             var doc = app.activeDocument;
             var sel = doc.selection || app.selection;
-            if (!sel || sel.length === 0) return JSON.stringify([]);
+            if (!sel || sel.length === 0) return "[]";
 
             var origUnit = app.scriptPreferences.measurementUnit;
             var origRedraw = app.scriptPreferences.enableRedraw;
@@ -612,6 +612,8 @@ var IDMeasurement = (function () {
     };
 })();
 
+$.global.IDMeasurement = IDMeasurement;
+
 function stringifyJSON(obj) {
     if (typeof obj === 'string') return obj;
     var t = typeof obj;
@@ -641,26 +643,11 @@ function parseJSON(str) {
     }
 }
 
-function _doMeas(param) {
-    return IDMeasurement.run(param);
-}
-
-function _doDeleteAll() {
-    return IDMeasurement.deleteAll();
-}
-
-function _doDeleteByName(name) {
-    return IDMeasurement.deleteByName(name);
-}
-
 // --- Expose Global Functions for Panel CSInterface ---
 function measAllSelect(u) {
-    if (typeof u === 'string') {
-        var parsed = parseJSON(u);
-        if (parsed) u = parsed;
-    }
+    var uStr = (typeof u === 'string') ? u : stringifyJSON(u);
     try {
-        return app.doScript(_doMeas, ScriptLanguage.JAVASCRIPT, [u], UndoModes.ENTIRE_SCRIPT, "ID Dimension");
+        return app.doScript("$.global.IDMeasurement.run(" + uStr + ");", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension");
     } catch (e) {
         return IDMeasurement.run(u);
     }
@@ -668,7 +655,7 @@ function measAllSelect(u) {
 
 function delMeasByName(name) {
     try {
-        return app.doScript(_doDeleteByName, ScriptLanguage.JAVASCRIPT, [name], UndoModes.ENTIRE_SCRIPT, "Delete ID Dimension");
+        return app.doScript("$.global.IDMeasurement.deleteByName('" + name + "');", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimension");
     } catch (e) {
         return IDMeasurement.deleteByName(name);
     }
@@ -676,7 +663,7 @@ function delMeasByName(name) {
 
 function delAllMeasurements() {
     try {
-        return app.doScript(_doDeleteAll, ScriptLanguage.JAVASCRIPT, [], UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
+        return app.doScript("$.global.IDMeasurement.deleteAll();", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
     } catch (e) {
         return IDMeasurement.deleteAll();
     }
