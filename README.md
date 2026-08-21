@@ -1,4 +1,4 @@
-# ID Dimension
+# ID Dimension v1.2
 
 ![ID Dimension Interface](images/ID_Dimension.png)
 

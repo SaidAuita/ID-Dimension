@@ -1,5 +1,5 @@
 /**
- * ID Dimension - Backend ExtendScript for Adobe InDesign (ES3 Compatible)
+ * ID Dimension v1.2 - Backend ExtendScript for Adobe InDesign (ES3 Compatible)
  * Creates measurement lines: height, width, center, radius, diameter for selected objects.
  */
 //@target indesign

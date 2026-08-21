@@ -2,7 +2,7 @@
 <ExtensionManifest
         Version="7.0"
         ExtensionBundleId="com.iddimension.v110"
-        ExtensionBundleVersion="1.1.0"
+        ExtensionBundleVersion="1.2.0"
         ExtensionBundleName="ID Dimension"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<Author>
@@ -21,7 +21,7 @@
     </Abstract>
 
     <ExtensionList>
-        <Extension Id="com.iddimension.v110" Version="1.1.0"/>
+        <Extension Id="com.iddimension.v110" Version="1.2.0"/>
     </ExtensionList>
 
     <ExecutionEnvironment>
@@ -48,7 +48,7 @@
                 </Lifecycle>
                 <UI>
                     <Type>Panel</Type>
-                    <Menu>ID Dimension v1.10</Menu>
+                    <Menu>ID Dimension v1.2</Menu>
                     <Geometry>
                         <Size>
                             <Height>380</Height>

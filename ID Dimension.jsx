@@ -1,5 +1,5 @@
 /**
- * ID Dimension - Standalone ScriptUI Palette for Adobe InDesign
+ * ID Dimension v1.2 - Standalone ScriptUI Palette for Adobe InDesign
  * 
  * Install (Windows): %APPDATA%\Adobe\InDesign\Version <XX.X>\<Locale>\Scripts\Scripts Panel\
  * Install (macOS): ~/Library/Preferences/Adobe InDesign/Version <XX.X>/<Locale>/Scripts/Scripts Panel/
@@ -685,7 +685,7 @@
     $.global.idDimensionEngine = Engine;
 
     // --- Build ScriptUI Window ---
-    var win = new Window("palette", "ID Dimension", undefined, { resizeable: false });
+    var win = new Window("palette", "ID Dimension v1.2", undefined, { resizeable: false });
     $.global.idDimensionPalette = win;
 
     win.orientation = "column";
