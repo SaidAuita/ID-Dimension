@@ -570,15 +570,54 @@ var IDMeasurement = (function () {
             } catch (e) {
                 return false;
             }
+        },
+
+        deleteAll: function () {
+            if (app.documents.length === 0) return 0;
+            var doc = app.activeDocument;
+            var count = 0;
+            try {
+                var allItems = doc.allPageItems;
+                for (var i = allItems.length - 1; i >= 0; i--) {
+                    var item = allItems[i];
+                    try {
+                        if (item.isValid && item.label && item.label.indexOf("ID_DIMENSION_") === 0) {
+                            item.remove();
+                            count++;
+                        }
+                    } catch (eItem) {}
+                }
+            } catch (e) {}
+            return count;
         }
     };
 })();
 
 // --- Expose Global Functions for Panel CSInterface ---
 function measAllSelect(u) {
-    return IDMeasurement.run(u);
+    var res = "[]";
+    try {
+        app.doScript(function () {
+            res = IDMeasurement.run(u);
+        }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension");
+    } catch (e) {
+        res = IDMeasurement.run(u);
+    }
+    return res;
 }
 
 function delMeasByName(name) {
     return IDMeasurement.deleteByName(name);
+}
+
+function delAllMeasurements() {
+    var count = 0;
+    try {
+        app.doScript(function () {
+            count = IDMeasurement.deleteAll();
+        }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
+    } catch (e) {
+        count = IDMeasurement.deleteAll();
+    }
+    return count;
 }

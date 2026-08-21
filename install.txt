@@ -3,87 +3,108 @@
 ========================================================================
 [Scroll down for Russian / Инструкция на русском языке ниже]
 
-The plugin supports Adobe InDesign versions CC 2014 – 2026+.
+The tool supports Adobe InDesign versions CC 2014 – 2026+ on both Windows and macOS.
 
-------------------------------------------------------------------------
-STEP 1. ENABLE DEBUG MODE (PlayerDebugMode)
-------------------------------------------------------------------------
-To run unsigned CEP plugins, you must enable debug mode in the Windows registry.
+You can install either the Modern CEP Extension (dockable panel) or the Standalone Script (floating palette).
 
-1. Run the `enable_player_debug_mode.reg` file by double-clicking it.
-2. Confirm adding the changes to the registry by clicking "Yes" -> "OK".
+========================================================================
+OPTION A: MODERN CEP EXTENSION (Dockable Panel)
+========================================================================
 
-(This step adds the value "PlayerDebugMode"="1" to the registry key 
-HKCU\Software\Adobe\CSXS.* for all InDesign versions from CC to 2026+).
+--- WINDOWS ---
+1. STEP 1: Enable Debug Mode
+   Double-click `enable_player_debug_mode.reg` and confirm adding changes to the registry.
 
-------------------------------------------------------------------------
-STEP 2. COPY THE PLUGIN FILES
-------------------------------------------------------------------------
-Copy the `ID Dimension` folder (which contains the CSXS, js, css folders, 
-index.html file, etc.) into the user profile directory:
+2. STEP 2: Copy Files
+   Press Win + R, paste:
+   %APPDATA%\Adobe\CEP\extensions
+   and copy the entire `ID Dimension` folder there.
 
-%APPDATA%\Adobe\CEP\extensions\
+3. STEP 3: Launch
+   Restart InDesign -> Window -> Extensions -> ID Dimension (or Extensions (Legacy)).
 
-For quick access:
-1. Press Win + R
-2. Paste the path: %APPDATA%\Adobe\CEP\extensions
-3. Press Enter, and copy the `ID Dimension` folder into the opened window.
+--- MACOS ---
+1. STEP 1: Enable Debug Mode
+   Open Terminal app and run this command:
+   defaults write com.adobe.CSXS.9 PlayerDebugMode 1; defaults write com.adobe.CSXS.10 PlayerDebugMode 1; defaults write com.adobe.CSXS.11 PlayerDebugMode 1; defaults write com.adobe.CSXS.12 PlayerDebugMode 1; defaults write com.adobe.CSXS.13 PlayerDebugMode 1; defaults write com.adobe.CSXS.14 PlayerDebugMode 1; defaults write com.adobe.CSXS.15 PlayerDebugMode 1; defaults write com.adobe.CSXS.16 PlayerDebugMode 1
 
-IMPORTANT: Install the plugin specifically in this path. If installed globally 
-(e.g., in Program Files), the automatic saving of settings and colors 
-may not work!
+2. STEP 2: Copy Files
+   In Finder, press Cmd + Shift + G, paste:
+   ~/Library/Application Support/Adobe/CEP/extensions/
+   (If the folder doesn't exist, create it) and copy the entire `ID Dimension` folder there.
 
-------------------------------------------------------------------------
-STEP 3. LAUNCH THE PLUGIN IN ADOBE INDESIGN
-------------------------------------------------------------------------
-1. Launch or restart Adobe InDesign.
-2. In the top menu, open:
-   Window -> Extensions -> ID Dimension
-   or in newer versions:
-   Window -> Extensions (Legacy) -> ID Dimension.
+3. STEP 3: Launch
+   Restart InDesign -> Window -> Extensions -> ID Dimension (or Extensions (Legacy)).
+
+========================================================================
+OPTION B: STANDALONE SCRIPT (Floating Palette)
+========================================================================
+No debug mode or registry tweaks required.
+
+--- WINDOWS ---
+Copy `ID Dimension.jsx` into:
+%APPDATA%\Adobe\InDesign\Version <XX.X>\<Locale>\Scripts\Scripts Panel\
+
+--- MACOS ---
+Copy `ID Dimension.jsx` into:
+~/Library/Preferences/Adobe InDesign/Version <XX.X>/<Locale>/Scripts/Scripts Panel/
+
+(Tip: In InDesign, open Window -> Utilities -> Scripts, right-click the "User" folder and choose "Reveal in Finder" / "Reveal in Explorer").
+
+Launch by double-clicking `ID Dimension.jsx` in the InDesign Scripts panel.
+
 
 ========================================================================
            ИНСТРУКЦИЯ ПО УСТАНОВКЕ ПЛАГИНА ID DIMENSION
 ========================================================================
 
-Плагин поддерживает версии Adobe InDesign CC 2014 – 2026+.
+Поддерживаются версии Adobe InDesign CC 2014 – 2026+ на Windows и macOS.
 
-------------------------------------------------------------------------
-ШАГ 1. ВКЛЮЧЕНИЕ РЕЖИМА ОТЛАДКИ (PlayerDebugMode)
-------------------------------------------------------------------------
-Для запуска неподписанных CEP-плагинов требуется включить режим отладки 
-в реестре Windows.
+Вы можете установить либо современное CEP-расширение (закрепляемая панель), либо отдельный скрипт (плавающая палитра).
 
-1. Запустите файл `enable_player_debug_mode.reg` двойным кликом мыши.
-2. Подтвердите добавление изменений в реестр, нажав "Да" -> "ОК".
+========================================================================
+ВАРИАНТ А: CEP-РАСШИРЕНИЕ (Закрепляемая панель)
+========================================================================
 
-(Этот шаг вносит значение "PlayerDebugMode"="1" в раздел реестра 
-HKCU\Software\Adobe\CSXS.* для всех версий InDesign от CC до 2026+).
+--- WINDOWS ---
+1. ШАГ 1: Включение режима отладки
+   Запустите файл `enable_player_debug_mode.reg` двойным кликом и подтвердите добавление.
 
-------------------------------------------------------------------------
-ШАГ 2. КОПИРОВАНИЕ ФАЙЛОВ ПЛАГИНА
-------------------------------------------------------------------------
-Скопируйте папку `ID Dimension` (в которой находятся папки CSXS, js, 
-css, файл index.html и т.д.) в директорию профиля пользователя:
+2. ШАГ 2: Копирование файлов
+   Нажмите Win + R, вставьте:
+   %APPDATA%\Adobe\CEP\extensions
+   и скопируйте туда папку `ID Dimension`.
 
-%APPDATA%\Adobe\CEP\extensions\
+3. ШАГ 3: Запуск
+   Перезапустите InDesign -> Окно -> Расширения -> ID Dimension (или Расширения (устаревшие)).
 
-Для быстрого перехода:
-1. Нажмите Win + R
-2. Вставьте путь: %APPDATA%\Adobe\CEP\extensions
-3. Нажмите Enter, и скопируйте папку `ID Dimension` туда.
+--- MACOS ---
+1. ШАГ 1: Включение режима отладки
+   Откройте программу "Терминал" (Terminal) и выполните команду:
+   defaults write com.adobe.CSXS.9 PlayerDebugMode 1; defaults write com.adobe.CSXS.10 PlayerDebugMode 1; defaults write com.adobe.CSXS.11 PlayerDebugMode 1; defaults write com.adobe.CSXS.12 PlayerDebugMode 1; defaults write com.adobe.CSXS.13 PlayerDebugMode 1; defaults write com.adobe.CSXS.14 PlayerDebugMode 1; defaults write com.adobe.CSXS.15 PlayerDebugMode 1; defaults write com.adobe.CSXS.16 PlayerDebugMode 1
 
-ВАЖНО: Устанавливайте плагин именно по этому пути. Если установить его 
-в Program Files, функция автоматического сохранения настроек и цветов 
-может не работать!
+2. ШАГ 2: Копирование файлов
+   В Finder нажмите Cmd + Shift + G, вставьте путь:
+   ~/Library/Application Support/Adobe/CEP/extensions/
+   (если папки нет — создайте её) и скопируйте туда папку `ID Dimension`.
 
-------------------------------------------------------------------------
-ШАГ 3. ЗАПУСК ПЛАГИНА В ADOBE INDESIGN
-------------------------------------------------------------------------
-1. Запустите или перезапустите Adobe InDesign.
-2. В верхнем меню откройте:
-   "Окно" -> "Расширения" -> "ID Dimension"
-   или в более новых версиях:
-   "Окно" -> "Расширения (устаревшие)" -> "ID Dimension"
+3. ШАГ 3: Запуск
+   Перезапустите InDesign -> Окно -> Расширения -> ID Dimension (или Расширения (устаревшие)).
 
+========================================================================
+ВАРИАНТ Б: ОТДЕЛЬНЫЙ СКРИПТ (Плавающая палитра)
+========================================================================
+Не требует включения режима отладки или правки реестра.
+
+--- WINDOWS ---
+Скопируйте `ID Dimension.jsx` в:
+%APPDATA%\Adobe\InDesign\Version <XX.X>\<Locale>\Scripts\Scripts Panel\
+
+--- MACOS ---
+Скопируйте `ID Dimension.jsx` в:
+~/Library/Preferences/Adobe InDesign/Version <XX.X>/<Locale>/Scripts/Scripts Panel/
+
+(Совет: в InDesign откройте Окно -> Утилиты -> Сценарии, кликните правой кнопкой мыши по папке "Пользователь" и выберите "Показать в Finder" / "Показать в Проводнике").
+
+Запуск: дважды кликните по `ID Dimension.jsx` в панели сценариев InDesign.
 ========================================================================

@@ -91,8 +91,14 @@ const Measurements = (function() {
         }
     }
 
+    async function deleteAllMeasurements() {
+        await evalScriptPromise('delAllMeasurements()');
+        currentMeasNames = [];
+    }
+
     return {
         runMeasurement: (p) => runMeasurement(p, false),
-        reRunMeasurement
+        reRunMeasurement,
+        deleteAllMeasurements
     };
 })();

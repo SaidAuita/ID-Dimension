@@ -1,16 +1,31 @@
 /**
  * ID Dimension - Standalone ScriptUI Palette for Adobe InDesign
  * 
- * Install: Place this file in your InDesign Scripts Panel folder:
- * %APPDATA%\Adobe\InDesign\Version <XX.X>\<Locale>\Scripts\Scripts Panel\
+ * Install (Windows): %APPDATA%\Adobe\InDesign\Version <XX.X>\<Locale>\Scripts\Scripts Panel\
+ * Install (macOS): ~/Library/Preferences/Adobe InDesign/Version <XX.X>/<Locale>/Scripts/Scripts Panel/
  */
 #targetengine "id_dimension_engine"
 
 (function () {
     'use strict';
 
+    // Safe Window Singleton: Close existing palette before opening a new one
+    if ($.global.idDimensionPalette && ($.global.idDimensionPalette instanceof Window)) {
+        try {
+            $.global.idDimensionPalette.close();
+        } catch (eWin) {}
+        $.global.idDimensionPalette = null;
+    }
+
+    try {
+
     // --- Preferences File Path ---
-    var PREFS_FILE = new File(Folder.userData + "/id_dimension_prefs.json");
+    var PREFS_FILE = null;
+    try {
+        PREFS_FILE = new File(Folder.userData + "/id_dimension_prefs.json");
+    } catch (eF) {
+        PREFS_FILE = null;
+    }
 
     var DEFAULT_PRESETS = {
         min: {
@@ -59,6 +74,7 @@
     }
 
     function parseJSON(str) {
+        if (!str || typeof str !== "string") return null;
         try {
             return eval("(" + str + ")");
         } catch (e) {
@@ -67,14 +83,17 @@
     }
 
     function loadPrefs() {
-        if (PREFS_FILE.exists) {
+        if (PREFS_FILE && PREFS_FILE.exists) {
             try {
-                PREFS_FILE.open('r');
-                var content = PREFS_FILE.read();
-                PREFS_FILE.close();
-                var data = parseJSON(content);
-                if (data) return data;
-            } catch (e) {}
+                if (PREFS_FILE.open('r')) {
+                    var content = PREFS_FILE.read();
+                    PREFS_FILE.close();
+                    var data = parseJSON(content);
+                    if (data && typeof data === "object") return data;
+                }
+            } catch (e) {
+                try { PREFS_FILE.close(); } catch (e2) {}
+            }
         }
         return {
             presets: DEFAULT_PRESETS,
@@ -84,11 +103,15 @@
     }
 
     function savePrefs(data) {
+        if (!PREFS_FILE) return;
         try {
-            PREFS_FILE.open('w');
-            PREFS_FILE.write(stringifyJSON(data));
-            PREFS_FILE.close();
-        } catch (e) {}
+            if (PREFS_FILE.open('w')) {
+                PREFS_FILE.write(stringifyJSON(data));
+                PREFS_FILE.close();
+            }
+        } catch (e) {
+            try { PREFS_FILE.close(); } catch (e2) {}
+        }
     }
 
     var appData = loadPrefs();
@@ -584,6 +607,25 @@
             }
         },
 
+        deleteAll: function () {
+            if (app.documents.length === 0) return 0;
+            var doc = app.activeDocument;
+            var count = 0;
+            try {
+                var allItems = doc.allPageItems;
+                for (var i = allItems.length - 1; i >= 0; i--) {
+                    var item = allItems[i];
+                    try {
+                        if (item.isValid && item.label && item.label.indexOf("ID_DIMENSION_") === 0) {
+                            item.remove();
+                            count++;
+                        }
+                    } catch (eItem) {}
+                }
+            } catch (e) {}
+            return count;
+        },
+
         run: function (u) {
             if (app.documents.length === 0) return [];
             var doc = app.activeDocument;
@@ -622,6 +664,8 @@
 
     // --- Build ScriptUI Window ---
     var win = new Window("palette", "ID Dimension", undefined, { resizeable: false });
+    $.global.idDimensionPalette = win;
+
     win.orientation = "column";
     win.alignChildren = ["fill", "top"];
     win.spacing = 6;
@@ -768,14 +812,17 @@
         })(sIdx);
     }
 
-    // Row 8: out page, save, default
+    // Row 8: out page, save, clear, default
     var r8 = pnlSet.add("group");
     r8.orientation = "row";
     r8.alignment = ["fill", "center"];
     var chkOutPage = r8.add("checkbox", undefined, "out page");
     var chkSave = r8.add("checkbox", undefined, "save");
+    var btnClear = r8.add("button", undefined, "clear");
+    btnClear.size = [40, 20];
+    btnClear.helpTip = "Delete all ID Dimension items in the active document";
     var btnDefault = r8.add("button", undefined, "default");
-    btnDefault.size = [48, 20];
+    btnDefault.size = [46, 20];
     btnDefault.helpTip = "Reset all settings and colors to defaults";
 
     // --- 3. Presets Row ---
@@ -856,6 +903,20 @@
     btnMin.onClick = function () { handlePreset("min"); };
     btnMed.onClick = function () { handlePreset("med"); };
     btnMax.onClick = function () { handlePreset("max"); };
+
+    btnClear.onClick = function () {
+        if (app.documents.length === 0) {
+            alert("Please open an InDesign document first.");
+            return;
+        }
+        try {
+            app.doScript(function () {
+                Engine.deleteAll();
+            }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
+        } catch (e) {
+            Engine.deleteAll();
+        }
+    };
 
     btnDefault.onClick = function () {
         if (confirm("Reset all settings and colors to defaults?")) {
@@ -948,5 +1009,9 @@
 
     // Show palette window
     win.show();
+
+    } catch (fatalErr) {
+        alert("ID Dimension Startup Error:\n" + fatalErr.message + "\nLine: " + fatalErr.line);
+    }
 
 })();

@@ -40,9 +40,19 @@ const UI = (function() {
         });
     }
 
+    function bindClearButton() {
+        const btnClear = document.getElementById('btn_clear');
+        if (btnClear) {
+            btnClear.addEventListener('click', () => {
+                Measurements.deleteAllMeasurements();
+            });
+        }
+    }
+
     function init() {
         bindMeasurementButtons();
         bindSaveStateOnInput();
+        bindClearButton();
     }
 
     return {
