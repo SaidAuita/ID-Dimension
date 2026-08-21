@@ -2,6 +2,7 @@
  * ID Dimension - Backend ExtendScript for Adobe InDesign (ES3 Compatible)
  * Creates measurement lines: height, width, center, radius, diameter for selected objects.
  */
+#targetengine "id_dimension_engine"
 //@target indesign
 
 var IDMeasurement = (function () {
