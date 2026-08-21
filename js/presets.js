@@ -8,15 +8,15 @@ const Presets = (function() {
     // Default presets (min / med / max)
     const defaultPresets = {
         min: {
-            add_mm: false, line_len: 5, precis: 0, line_stroke: 0.1, gap: 0.5, line_indent: 0.5, arrow_width: 2,
+            add_mm: false, scale: '1:1', line_len: 5, precis: 0, line_stroke: 0.1, gap: 0.5, line_indent: 0.5, arrow_width: 2,
             font_size: 8, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
         },
         med: {
-            add_mm: false, line_len: 10, precis: 2, line_stroke: 0.2, gap: 1, line_indent: 1, arrow_width: 3.5,
+            add_mm: false, scale: '1:1', line_len: 10, precis: 2, line_stroke: 0.2, gap: 1, line_indent: 1, arrow_width: 3.5,
             font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
         },
         max: {
-            add_mm: false, line_len: 20, precis: 3, line_stroke: 0.5, gap: 2, line_indent: 2, arrow_width: 5,
+            add_mm: false, scale: '1:1', line_len: 20, precis: 3, line_stroke: 0.5, gap: 2, line_indent: 2, arrow_width: 5,
             font_size: 24, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
         }
     };
@@ -25,7 +25,7 @@ const Presets = (function() {
     
     // Default fallback state (the values hardcoded in index.html)
     const defaultGlobalState = {
-        add_mm: false, unit_select: 'mm', line_len: 10, precis: 2, line_stroke: 0.2, gap: 0.5, line_indent: 1.0, arrow_width: 3.5,
+        add_mm: false, scale: '1:1', unit_select: 'mm', line_len: 10, precis: 2, line_stroke: 0.2, gap: 0.5, line_indent: 1.0, arrow_width: 3.5,
         font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
     };
 
@@ -43,6 +43,7 @@ const Presets = (function() {
     function collectCurrentSettings() {
         return {
             add_mm: document.getElementById('add_mm').checked,
+            scale: document.getElementById('scale_ratio') ? document.getElementById('scale_ratio').value : '1:1',
             unit_select: document.getElementById('unit_select') ? document.getElementById('unit_select').value : 'mm',
             line_len: document.getElementById('line_len').value,
             precis: document.getElementById('precis').value,
@@ -64,6 +65,7 @@ const Presets = (function() {
     function applySettings(p) {
         if (!p) return;
         document.getElementById('add_mm').checked = !!p.add_mm;
+        if (document.getElementById('scale_ratio') && p.scale !== undefined) document.getElementById('scale_ratio').value = p.scale;
         if (document.getElementById('unit_select') && p.unit_select !== undefined) document.getElementById('unit_select').value = p.unit_select;
         document.getElementById('line_len').value = p.line_len !== undefined ? p.line_len : 10;
         document.getElementById('precis').value = p.precis !== undefined ? p.precis : 2;

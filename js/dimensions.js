@@ -15,6 +15,25 @@ var IDMeasurement = (function () {
         return ('1' + (new Date().getTime()) + Math.floor(Math.random() * 10000)).slice(0, len);
     }
 
+    function parseScale(val) {
+        if (typeof val === 'number') return (val > 0) ? val : 1;
+        if (!val || typeof val !== 'string') return 1;
+        val = val.replace(/\s+/g, '');
+        if (val.indexOf(':') !== -1) {
+            var parts = val.split(':');
+            var left = parseFloat(parts[0]);
+            var right = parseFloat(parts[1]);
+            if (!isNaN(left) && !isNaN(right) && left > 0 && right > 0) {
+                return right / left;
+            }
+        }
+        var num = parseFloat(val);
+        if (!isNaN(num) && num > 0) {
+            return num;
+        }
+        return 1;
+    }
+
     function getOrCreateCmykColor(doc, comp) {
         if (!comp || comp.length < 4) return doc.swatches.itemByName("Black");
         var c = isNaN(Number(comp[0])) ? 0 : Number(comp[0]);
@@ -217,11 +236,11 @@ var IDMeasurement = (function () {
         var unitScale = 2.834645668; // mm in pt
         if (unitType === 'cm') unitScale = 28.34645668;
         else if (unitType === 'in') unitScale = 72.0;
-        else if (unitType === 'pt' || unitType === 'px') unitScale = 1.0;
+        var scaleVal = (u.scale !== undefined) ? parseScale(u.scale) : 1;
 
-        var lablW = Math.round(elW / (unitScale / p)) / p;
-        var lablH = Math.round(elH / (unitScale / p)) / p;
-        var lablR = Math.round((elW / 2) / (unitScale / p)) / p;
+        var lablW = Math.round((elW * scaleVal) / (unitScale / p)) / p;
+        var lablH = Math.round((elH * scaleVal) / (unitScale / p)) / p;
+        var lablR = Math.round(((elW * scaleVal) / 2) / (unitScale / p)) / p;
 
         // Extension past dimension line for witness lines (1.5 - 2 mm)
         var ext = Math.max(stopBot, 2.0 * PT_TO_MM);

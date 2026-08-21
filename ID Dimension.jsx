@@ -30,15 +30,15 @@
     var DEFAULT_PRESETS = {
         min: {
             add_mm: false, unit_select: 0, line_len: 5, precis: 0, line_stroke: 0.1, gap: 0.5, line_indent: 0.5, arrow_width: 2,
-            font_size: 8, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
+            font_size: 8, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
         },
         med: {
             add_mm: false, unit_select: 0, line_len: 10, precis: 2, line_stroke: 0.2, gap: 1, line_indent: 1, arrow_width: 3.5,
-            font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
+            font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
         },
         max: {
             add_mm: false, unit_select: 0, line_len: 20, precis: 3, line_stroke: 0.5, gap: 2, line_indent: 2, arrow_width: 5,
-            font_size: 24, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
+            font_size: 24, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
         }
     };
 
@@ -52,6 +52,25 @@
     ];
 
     var UNITS_LIST = ['mm', 'cm', 'in', 'pt', 'px'];
+
+    function parseScale(val) {
+        if (typeof val === 'number') return (val > 0) ? val : 1;
+        if (!val || typeof val !== 'string') return 1;
+        val = val.replace(/\s+/g, '');
+        if (val.indexOf(':') !== -1) {
+            var parts = val.split(':');
+            var left = parseFloat(parts[0]);
+            var right = parseFloat(parts[1]);
+            if (!isNaN(left) && !isNaN(right) && left > 0 && right > 0) {
+                return right / left;
+            }
+        }
+        var num = parseFloat(val);
+        if (!isNaN(num) && num > 0) {
+            return num;
+        }
+        return 1;
+    }
 
     // --- JSON parser/stringifier for ExtendScript ES3 ---
     function stringifyJSON(obj) {
@@ -317,10 +336,11 @@
             if (unitType === 'cm') unitScale = 28.34645668;
             else if (unitType === 'in') unitScale = 72.0;
             else if (unitType === 'pt' || unitType === 'px') unitScale = 1.0;
+            var scaleVal = (u.scale !== undefined) ? parseScale(u.scale) : 1;
 
-            var lablW = Math.round(elW / (unitScale / p)) / p;
-            var lablH = Math.round(elH / (unitScale / p)) / p;
-            var lablR = Math.round((elW / 2) / (unitScale / p)) / p;
+            var lablW = Math.round((elW * scaleVal) / (unitScale / p)) / p;
+            var lablH = Math.round((elH * scaleVal) / (unitScale / p)) / p;
+            var lablR = Math.round(((elW * scaleVal) / 2) / (unitScale / p)) / p;
 
             var ext = Math.max(stopBot, 2.0 * PT_TO_MM);
             var createdItems = [];
@@ -721,13 +741,17 @@
     pnlSet.spacing = 4;
     pnlSet.margins = 6;
 
-    // Row 1: unit & layer
+    // Row 1: unit, scale, layer
     var r1 = pnlSet.add("group");
     r1.orientation = "row";
     var chkUnit = r1.add("checkbox", undefined, "unit");
+    r1.add("statictext", undefined, "scale:").characters = 4;
+    var txtScale = r1.add("edittext", undefined, "1:1");
+    txtScale.characters = 4;
+    txtScale.helpTip = "Scale ratio (e.g. 1:1, 1:10, 1:50, or multiplier like 10)";
     var chkLayer = r1.add("checkbox", undefined, "layer:");
     var txtLayer = r1.add("edittext", undefined, "layout");
-    txtLayer.characters = 8;
+    txtLayer.characters = 6;
 
     // Row 2: length & precis
     var r2 = pnlSet.add("group");
@@ -847,6 +871,7 @@
 
         return {
             add_mm: chkUnit.value,
+            scale: txtScale.text || "1:1",
             unit_select: ddlUnits.selection ? ddlUnits.selection.index : 0,
             line_len: parseFloat(txtLen.text) || 10,
             precis: ddlPrecis.selection ? ddlPrecis.selection.index : 2,
@@ -868,6 +893,7 @@
     function applyUI(st) {
         if (!st) return;
         chkUnit.value = !!st.add_mm;
+        txtScale.text = String(st.scale !== undefined ? st.scale : "1:1");
         ddlUnits.selection = (st.unit_select !== undefined) ? st.unit_select : 0;
         txtLen.text = String(st.line_len !== undefined ? st.line_len : 10);
         ddlPrecis.selection = (st.precis !== undefined) ? st.precis : 2;
@@ -931,7 +957,7 @@
     };
 
     // Auto-save on edit
-    var inputs = [txtLen, txtStroke, txtGap, txtIndent, txtArrow, txtFontSize, txtC, txtM, txtY, txtK, txtLayer];
+    var inputs = [txtLen, txtScale, txtStroke, txtGap, txtIndent, txtArrow, txtFontSize, txtC, txtM, txtY, txtK, txtLayer];
     for (var inpIdx = 0; inpIdx < inputs.length; inpIdx++) {
         inputs[inpIdx].onChange = saveCurrentState;
     }
@@ -976,6 +1002,7 @@
                 colComp: [ui.cyan, ui.magenta, ui.yellow, ui.black],
                 units: ui.add_mm ? selUnit : '',
                 unitType: selUnit,
+                scale: ui.scale,
                 addLay: ui.add_layer,
                 layName: ui.layer_name_text,
                 outArtboard: ui.out_artboard
