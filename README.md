@@ -1,4 +1,4 @@
-# ID Dimension v1.2
+# ID Dimension v1.3
 
 ![ID Dimension Interface](images/ID_Dimension.png)
 
@@ -30,7 +30,7 @@ This repository includes **two versions** of the tool in one package:
 ### Dimensioning Tools
 * Dimensioning width (top / bottom) and height (left / right).
 * Dimensioning the gap between two selected objects (with `Ctrl` / `Cmd` key held, or by selecting 2 objects).
-* Measuring the radius and diameter of circles and circular frames.
+* Measuring the radius and diameter of circles and circular frames in two directions: **Top-Right** and **Bottom-Right**.
 * Marking the center of an object.
 * Customizable appearance: stroke weight, gap, indent, arrow size, font size, drawing scale, and precision (up to 3 decimal places).
 * Moving all dimensions to a designated separate layer (`layer` option).
@@ -98,7 +98,7 @@ No registry or terminal tweaks needed.
 ### Функционал
 * Простановка ширины (сверху / снизу) и высоты (слева / справа).
 * Простановка размеров между двумя выбранными объектами (с зажатой клавишей `Ctrl` / `Cmd` или выбором 2 объектов).
-* Измерение радиуса и диаметра окружностей.
+* Измерение радиуса и диаметра окружностей в двух направлениях: **вправо/вверх** и **вправо/вниз**.
 * Пометка центра объекта.
 * Гибкая настройка: толщина линии (stroke), отступ от объекта (gap), вынос линии (indent), размер стрелки (arrow), размер шрифта, масштаб (scale) и точность округления (до 3 знаков).
 * Вынос всех размеров на отдельный слой (опция `layer`).

@@ -8,8 +8,10 @@ const UI = (function() {
             'btn_bott': { type: 'linear', side: 'bott' },
             'btn_left': { type: 'linear', side: 'left' },
             'btn_right': { type: 'linear', side: 'right' },
-            'btn_diam': { type: 'diam', side: '' },
-            'btn_rad': { type: 'rad', side: '' },
+            'btn_diam': { type: 'diam', side: 'tr' },
+            'btn_diam_br': { type: 'diam', side: 'br' },
+            'btn_rad': { type: 'rad', side: 'tr' },
+            'btn_rad_br': { type: 'rad', side: 'br' },
             'btn_cent': { type: 'cent', side: '' }
         };
 

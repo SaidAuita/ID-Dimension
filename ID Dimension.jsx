@@ -1,5 +1,5 @@
 /**
- * ID Dimension v1.2 - Standalone ScriptUI Palette for Adobe InDesign
+ * ID Dimension v1.3 - Standalone ScriptUI Palette for Adobe InDesign
  * 
  * Install (Windows): %APPDATA%\Adobe\InDesign\Version <XX.X>\<Locale>\Scripts\Scripts Panel\
  * Install (macOS): ~/Library/Preferences/Adobe InDesign/Version <XX.X>/<Locale>/Scripts/Scripts Panel/
@@ -202,6 +202,7 @@
 
         isCircle: function (elem) {
             try {
+                if (!elem || elem.constructor.name === "Group") return false;
                 var gb = elem.geometricBounds;
                 var h = Math.abs(gb[2] - gb[0]);
                 var w = Math.abs(gb[3] - gb[1]);
@@ -538,21 +539,28 @@
 
             } else if (measType === 'rad') {
                 if (!this.isCircle(selElem)) return null;
+                var isBr = (side === 'br' || side === 'bott');
                 var rad = elW / 2;
                 var cos45 = Math.cos(Math.PI / 4);
                 var sin45 = Math.sin(Math.PI / 4);
                 var xr = midX + rad * cos45;
-                var yr = midY - rad * sin45;
+                var yr = isBr ? (midY + rad * sin45) : (midY - rad * sin45);
 
                 _addLine([midX, midY], [xr, yr]);
 
                 var arrowTip = [xr, yr];
-                var arrowBase1 = [xr - arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
-                var arrowBase2 = [xr - arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+                var arrowBase1, arrowBase2;
+                if (isBr) {
+                    arrowBase1 = [xr - arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
+                    arrowBase2 = [xr - arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
+                } else {
+                    arrowBase1 = [xr - arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
+                    arrowBase2 = [xr - arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+                }
                 _addArrow([arrowTip, arrowBase1, arrowBase2, arrowTip]);
 
                 var kneeX = xr + stopTop * cos45;
-                var kneeY = yr - stopTop * sin45;
+                var kneeY = isBr ? (yr + stopTop * sin45) : (yr - stopTop * sin45);
                 var endX = kneeX + stopTop;
                 _addLine([xr, yr], [kneeX, kneeY]);
                 _addLine([kneeX, kneeY], [endX, kneeY]);
@@ -563,21 +571,27 @@
 
             } else if (measType === 'diam') {
                 if (!this.isCircle(selElem)) return null;
+                var isBr = (side === 'br' || side === 'bott');
                 var radD = elW / 2;
                 var cos45d = Math.cos(Math.PI / 4);
                 var sin45d = Math.sin(Math.PI / 4);
                 var x1 = midX - radD * cos45d;
-                var y1 = midY + radD * sin45d;
+                var y1 = isBr ? (midY - radD * sin45d) : (midY + radD * sin45d);
                 var x2 = midX + radD * cos45d;
-                var y2 = midY - radD * sin45d;
+                var y2 = isBr ? (midY + radD * sin45d) : (midY - radD * sin45d);
 
                 _addLine([x1, y1], [x2, y2]);
 
-                _addArrow([[x1, y1], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
-                _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+                if (isBr) {
+                    _addArrow([[x1, y1], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
+                    _addArrow([[x2, y2], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+                } else {
+                    _addArrow([[x1, y1], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
+                    _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+                }
 
                 var kneeXd = x2 + stopTop * cos45d;
-                var kneeYd = y2 - stopTop * sin45d;
+                var kneeYd = isBr ? (y2 + stopTop * sin45d) : (y2 - stopTop * sin45d);
                 var endXd = kneeXd + stopTop;
                 _addLine([x2, y2], [kneeXd, kneeYd]);
                 _addLine([kneeXd, kneeYd], [endXd, kneeYd]);
@@ -685,8 +699,8 @@
     $.global.idDimensionEngine = Engine;
 
     // --- Build ScriptUI Window ---
-    var win = new Window("palette", "ID Dimension v1.2", undefined, { resizeable: false });
-    win.text = "ID Dimension v1.2";
+    var win = new Window("palette", "ID Dimension v1.3", undefined, { resizeable: false });
+    win.text = "ID Dimension v1.3";
     $.global.idDimensionPalette = win;
 
     win.orientation = "column";
@@ -700,9 +714,18 @@
     pnlMeas.alignment = ["center", "top"];
     pnlMeas.spacing = 8;
 
-    var btnDiam = pnlMeas.add("button", undefined, "\u00D8");
-    btnDiam.size = [30, 26];
-    btnDiam.helpTip = "Diameter";
+    var grpDiam = pnlMeas.add("group");
+    grpDiam.orientation = "column";
+    grpDiam.spacing = 6;
+    grpDiam.alignChildren = ["center", "center"];
+
+    var btnDiamTr = grpDiam.add("button", undefined, "\u00D8 \u2197");
+    btnDiamTr.size = [36, 24];
+    btnDiamTr.helpTip = "Diameter (Top-Right)";
+
+    var btnDiamBr = grpDiam.add("button", undefined, "\u00D8 \u2198");
+    btnDiamBr.size = [36, 24];
+    btnDiamBr.helpTip = "Diameter (Bottom-Right)";
 
     var grpCross = pnlMeas.add("group");
     grpCross.orientation = "column";
@@ -733,9 +756,18 @@
     btnBott.size = [30, 22];
     btnBott.helpTip = "Bottom Dimension";
 
-    var btnRad = pnlMeas.add("button", undefined, "R");
-    btnRad.size = [30, 26];
-    btnRad.helpTip = "Radius";
+    var grpRad = pnlMeas.add("group");
+    grpRad.orientation = "column";
+    grpRad.spacing = 6;
+    grpRad.alignChildren = ["center", "center"];
+
+    var btnRadTr = grpRad.add("button", undefined, "R \u2197");
+    btnRadTr.size = [36, 24];
+    btnRadTr.helpTip = "Radius (Top-Right)";
+
+    var btnRadBr = grpRad.add("button", undefined, "R \u2198");
+    btnRadBr.size = [36, 24];
+    btnRadBr.helpTip = "Radius (Bottom-Right)";
 
     // --- 2. Settings Block ---
     var pnlSet = win.add("panel", undefined, "");
@@ -1026,8 +1058,10 @@
     btnBott.onClick = function () { runAction('linear', 'bott'); };
     btnLeft.onClick = function () { runAction('linear', 'left'); };
     btnRight.onClick = function () { runAction('linear', 'right'); };
-    btnDiam.onClick = function () { runAction('diam', ''); };
-    btnRad.onClick = function () { runAction('rad', ''); };
+    btnDiamTr.onClick = function () { runAction('diam', 'tr'); };
+    btnDiamBr.onClick = function () { runAction('diam', 'br'); };
+    btnRadTr.onClick = function () { runAction('rad', 'tr'); };
+    btnRadBr.onClick = function () { runAction('rad', 'br'); };
     btnCent.onClick = function () { runAction('cent', ''); };
 
     // Initial populate

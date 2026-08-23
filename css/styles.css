@@ -30,6 +30,13 @@ body {
     gap: 15px; /* space between diam, cross, and rad */
 }
 
+.col-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
 .cross-layout {
     display: flex;
     flex-direction: column;

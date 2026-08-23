@@ -1,5 +1,5 @@
 /**
- * ID Dimension v1.2 - Backend ExtendScript for Adobe InDesign (ES3 Compatible)
+ * ID Dimension v1.3 - Backend ExtendScript for Adobe InDesign (ES3 Compatible)
  * Creates measurement lines: height, width, center, radius, diameter for selected objects.
  */
 //@target indesign
@@ -97,6 +97,7 @@ var IDMeasurement = (function () {
 
     function isCircle(elem) {
         try {
+            if (!elem || elem.constructor.name === "Group") return false;
             var gb = elem.geometricBounds;
             var h = Math.abs(gb[2] - gb[0]);
             var w = Math.abs(gb[3] - gb[1]);
@@ -453,24 +454,31 @@ var IDMeasurement = (function () {
             if (!isCircle(selElem)) {
                 return null;
             }
+            var isBr = (side === 'br' || side === 'bott');
             var rad = elW / 2;
             var cos45 = Math.cos(Math.PI / 4);
             var sin45 = Math.sin(Math.PI / 4);
             var xr = midX + rad * cos45;
-            var yr = midY - rad * sin45;
+            var yr = isBr ? (midY + rad * sin45) : (midY - rad * sin45);
 
             // Radius line from center to circle edge
             _addLine([midX, midY], [xr, yr]);
 
             // Arrow at circle edge pointing outwards
             var arrowTip = [xr, yr];
-            var arrowBase1 = [xr - arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
-            var arrowBase2 = [xr - arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+            var arrowBase1, arrowBase2;
+            if (isBr) {
+                arrowBase1 = [xr - arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
+                arrowBase2 = [xr - arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
+            } else {
+                arrowBase1 = [xr - arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
+                arrowBase2 = [xr - arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+            }
             _addArrow([arrowTip, arrowBase1, arrowBase2, arrowTip]);
 
             // Leader lines
             var kneeX = xr + stopTop * cos45;
-            var kneeY = yr - stopTop * sin45;
+            var kneeY = isBr ? (yr + stopTop * sin45) : (yr - stopTop * sin45);
             var endX = kneeX + stopTop;
             _addLine([xr, yr], [kneeX, kneeY]);
             _addLine([kneeX, kneeY], [endX, kneeY]);
@@ -484,24 +492,30 @@ var IDMeasurement = (function () {
             if (!isCircle(selElem)) {
                 return null;
             }
+            var isBr = (side === 'br' || side === 'bott');
             var radD = elW / 2;
             var cos45d = Math.cos(Math.PI / 4);
             var sin45d = Math.sin(Math.PI / 4);
             var x1 = midX - radD * cos45d;
-            var y1 = midY + radD * sin45d;
+            var y1 = isBr ? (midY - radD * sin45d) : (midY + radD * sin45d);
             var x2 = midX + radD * cos45d;
-            var y2 = midY - radD * sin45d;
+            var y2 = isBr ? (midY + radD * sin45d) : (midY - radD * sin45d);
 
             // Diameter line across circle
             _addLine([x1, y1], [x2, y2]);
 
             // Arrows at both ends
-            _addArrow([[x1, y1], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
-            _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+            if (isBr) {
+                _addArrow([[x1, y1], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
+                _addArrow([[x2, y2], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+            } else {
+                _addArrow([[x1, y1], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
+                _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+            }
 
-            // Leader line from top-right edge
+            // Leader line
             var kneeXd = x2 + stopTop * cos45d;
-            var kneeYd = y2 - stopTop * sin45d;
+            var kneeYd = isBr ? (y2 + stopTop * sin45d) : (y2 - stopTop * sin45d);
             var endXd = kneeXd + stopTop;
             _addLine([x2, y2], [kneeXd, kneeYd]);
             _addLine([kneeXd, kneeYd], [endXd, kneeYd]);

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <link id="hostStyle" rel="stylesheet" href="css/styles.css"/>
-    <title>ID Dimension v1.2</title>
+    <title>ID Dimension v1.3</title>
 </head>
 <body class="hostElt">
 
@@ -11,9 +11,14 @@
 
     <!-- MEASUREMENT BUTTONS -->
     <div class="measurements-block">
-        <button id="btn_diam" class="hostButton icon-btn" title="Diameter">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M6 18l12-12"/></svg>
-        </button>
+        <div class="col-buttons">
+            <button id="btn_diam" class="hostButton icon-btn" title="Diameter (Top-Right)">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M6 18l12-12"/></svg>
+            </button>
+            <button id="btn_diam_br" class="hostButton icon-btn" title="Diameter (Bottom-Right)">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M6 6l12 12"/></svg>
+            </button>
+        </div>
 
         <div class="cross-layout">
             <button id="btn_top" class="hostButton icon-btn" title="Top Dimension (Ctrl for 2 objects)">
@@ -35,9 +40,14 @@
             </button>
         </div>
         
-        <button id="btn_rad" class="hostButton icon-btn" title="Radius">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M12 12l6-6"/></svg>
-        </button>
+        <div class="col-buttons">
+            <button id="btn_rad" class="hostButton icon-btn" title="Radius (Top-Right)">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M12 12l6-6"/></svg>
+            </button>
+            <button id="btn_rad_br" class="hostButton icon-btn" title="Radius (Bottom-Right)">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M12 12l6 6"/></svg>
+            </button>
+        </div>
     </div>
 
     <!-- COMPACT SETTINGS -->
