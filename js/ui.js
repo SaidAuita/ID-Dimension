@@ -42,19 +42,30 @@ const UI = (function() {
         });
     }
 
+    function bindClearButton() {
+        const btnClear = document.getElementById('btn_clear');
+        if (btnClear) {
+            btnClear.addEventListener('click', () => {
+                Measurements.deleteAllMeasurements();
+            });
+        }
+    }
+
     function bindFooterLinks() {
         const csInterface = new CSInterface();
         function openURL(url) {
             try {
-                if (typeof csInterface !== 'undefined' && csInterface.openURLInDefaultBrowser) {
-                    csInterface.openURLInDefaultBrowser(url);
-                } else if (window.cep && window.cep.util && window.cep.util.openURLInDefaultBrowser) {
+                if (window.cep && window.cep.util && typeof window.cep.util.openURLInDefaultBrowser === 'function') {
                     window.cep.util.openURLInDefaultBrowser(url);
+                } else if (typeof csInterface !== 'undefined' && typeof csInterface.openURLInDefaultBrowser === 'function') {
+                    csInterface.openURLInDefaultBrowser(url);
                 } else {
                     window.open(url, '_blank');
                 }
             } catch (e) {
-                window.open(url, '_blank');
+                try {
+                    window.open(url, '_blank');
+                } catch (err) {}
             }
         }
 
