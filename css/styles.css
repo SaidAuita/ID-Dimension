@@ -200,3 +200,33 @@ input[type=number] {
 .preset-btn.active-preset {
     color: #ffa98a !important;
 }
+
+/* Footer Links */
+.footer-links {
+    margin-top: 5px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.footer-link {
+    font-size: 9.5px;
+    color: inherit;
+    opacity: 0.65;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    line-height: 1.3;
+    transition: opacity 0.15s, color 0.15s;
+}
+
+.footer-link:hover {
+    opacity: 1;
+    color: #2680eb;
+    text-decoration: underline;
+}

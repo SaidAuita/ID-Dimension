@@ -42,11 +42,35 @@ const UI = (function() {
         });
     }
 
-    function bindClearButton() {
-        const btnClear = document.getElementById('btn_clear');
-        if (btnClear) {
-            btnClear.addEventListener('click', () => {
-                Measurements.deleteAllMeasurements();
+    function bindFooterLinks() {
+        const csInterface = new CSInterface();
+        function openURL(url) {
+            try {
+                if (typeof csInterface !== 'undefined' && csInterface.openURLInDefaultBrowser) {
+                    csInterface.openURLInDefaultBrowser(url);
+                } else if (window.cep && window.cep.util && window.cep.util.openURLInDefaultBrowser) {
+                    window.cep.util.openURLInDefaultBrowser(url);
+                } else {
+                    window.open(url, '_blank');
+                }
+            } catch (e) {
+                window.open(url, '_blank');
+            }
+        }
+
+        const linkGithub = document.getElementById('link_github');
+        if (linkGithub) {
+            linkGithub.addEventListener('click', (e) => {
+                e.preventDefault();
+                openURL('https://github.com/SaidAuita/ID-Dimension');
+            });
+        }
+
+        const linkTools = document.getElementById('link_tools');
+        if (linkTools) {
+            linkTools.addEventListener('click', (e) => {
+                e.preventDefault();
+                openURL('https://ph-cu-s.com/tools');
             });
         }
     }
@@ -55,6 +79,7 @@ const UI = (function() {
         bindMeasurementButtons();
         bindSaveStateOnInput();
         bindClearButton();
+        bindFooterLinks();
     }
 
     return {
