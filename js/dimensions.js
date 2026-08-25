@@ -528,10 +528,10 @@ var IDMeasurement = (function () {
                 _addLine([left - stopBot, top], [xPos - ext, top]);
                 _addLine([left - stopBot, bott], [xPos - ext, bott]);
 
-                if (th < (elH - gap * 2 - arW * 3)) {
+                if (tw < (elH - gap * 2 - arW * 3)) {
                     // Inside layout
-                    _addLine([xPos, top], [xPos, midY - th / 2 - gap]);
-                    _addLine([xPos, midY + th / 2 + gap], [xPos, bott]);
+                    _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
+                    _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
                     _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
                     _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
                 } else {
@@ -559,10 +559,10 @@ var IDMeasurement = (function () {
                 _addLine([right + stopBot, top], [xPos + ext, top]);
                 _addLine([right + stopBot, bott], [xPos + ext, bott]);
 
-                if (th < (elH - gap * 2 - arW * 3)) {
+                if (tw < (elH - gap * 2 - arW * 3)) {
                     // Inside layout
-                    _addLine([xPos, top], [xPos, midY - th / 2 - gap]);
-                    _addLine([xPos, midY + th / 2 + gap], [xPos, bott]);
+                    _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
+                    _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
                     _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
                     _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
                 } else {
