@@ -347,16 +347,39 @@
             var sel = doc.selection || app.selection;
             var selElem = (iterator !== -1) ? sel[iterator] : sel[0];
             
-            // Find target container (Page or Spread)
+            // Find target container (Page or Spread) with infinite-loop safeguard
             var targetParent = selElem.parent;
-            while (targetParent && targetParent.constructor.name !== "Spread" && 
-                   targetParent.constructor.name !== "Page" && 
-                   targetParent.constructor.name !== "MasterSpread") {
-                targetParent = targetParent.parent;
+            var safetyCounter = 0;
+            while (targetParent && safetyCounter < 25) {
+                safetyCounter++;
+                var cName = "";
+                try { cName = targetParent.constructor.name; } catch(e) { break; }
+                if (cName === "Spread" || cName === "Page" || cName === "MasterSpread") {
+                    break;
+                }
+                if (cName === "Document" || cName === "Application" || !targetParent.parent || targetParent.parent === targetParent) {
+                    targetParent = null;
+                    break;
+                }
+                try {
+                    targetParent = targetParent.parent;
+                } catch(e2) {
+                    targetParent = null;
+                    break;
+                }
             }
-            if (!targetParent) {
-                targetParent = app.activeWindow.activeSpread;
+            if (!targetParent || targetParent.constructor.name === "Document" || targetParent.constructor.name === "Application") {
+                try {
+                    targetParent = app.activeWindow.activeSpread;
+                } catch(eWin) {
+                    try {
+                        targetParent = doc.activeSpread || doc.spreads[0];
+                    } catch(eDoc) {
+                        targetParent = null;
+                    }
+                }
             }
+            if (!targetParent) return null;
 
             var defLayer = (selElem.itemLayer && selElem.itemLayer.isValid) ? selElem.itemLayer : doc.activeLayer;
             var lay = this.getOrCreateLayer(doc, layName, addLay, defLayer);
@@ -690,7 +713,7 @@
                     _addArrow([[x2, y2], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
                 } else {
                     _addArrow([[x1, y1], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
-                    _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+                    _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
                 }
 
                 var kneeXd = isLeft ? (x2 - stopTop * cos45d) : (x2 + stopTop * cos45d);
@@ -816,6 +839,7 @@
     win.alignChildren = ["fill", "top"];
     win.spacing = 6;
     win.margins = 8;
+    win.preferredSize.width = 240;
 
     // --- 1. Measurement Buttons Block ---
     var pnlMeas = win.add("group");
@@ -984,7 +1008,7 @@
     }
     var ddlFont = rFont.add("dropdownlist", undefined, fontLabels);
     ddlFont.selection = 0;
-    ddlFont.alignment = ["fill", "center"];
+    ddlFont.preferredSize = [140, 20];
 
     // Row 6: font size & units
     var r5 = pnlSet.add("group");
@@ -995,6 +1019,7 @@
     r5.add("statictext", undefined, "units:").characters = 4;
     var ddlUnits = r5.add("dropdownlist", undefined, UNITS_LIST);
     ddlUnits.selection = 0;
+    ddlUnits.preferredSize = [50, 20];
 
     // Row 7: CMYK inputs
     var r6 = pnlSet.add("group");
@@ -1125,9 +1150,13 @@
         if (!p) return;
         chkUnit.value = !!p.add_mm;
         txtScale.text = (p.scale !== undefined) ? String(p.scale) : '1:1';
-        if (p.unit_select !== undefined) ddlUnits.selection = p.unit_select;
+        if (p.unit_select !== undefined && p.unit_select >= 0 && p.unit_select < UNITS_LIST.length) {
+            ddlUnits.selection = p.unit_select;
+        }
         txtLen.text = (p.line_len !== undefined) ? String(p.line_len) : '10';
-        if (p.precis !== undefined) ddlPrecis.selection = p.precis;
+        if (p.precis !== undefined && p.precis >= 0 && p.precis < 4) {
+            ddlPrecis.selection = p.precis;
+        }
         txtStroke.text = (p.line_stroke !== undefined) ? String(p.line_stroke) : '0.2';
         txtGap.text = (p.gap !== undefined) ? String(p.gap) : '0.5';
         txtIndent.text = (p.line_indent !== undefined) ? String(p.line_indent) : '1.0';
@@ -1172,8 +1201,6 @@
     }
 
     // --- Wire Event Handlers ---
-    var lastMeasParams = null;
-
     function runMeas(measType, side, isCtrl) {
         if (app.documents.length === 0) {
             alert("Please open a document first.");
@@ -1188,18 +1215,20 @@
 
         saveCurrentState();
         var opts = getUIOptions(measType, side, isCtrl);
-        lastMeasParams = { measType: measType, side: side, isCtrl: isCtrl };
+        var optsStr = stringifyJSON(opts);
 
-        app.doScript(function () {
+        try {
+            app.doScript("$.global.idDimensionEngine.run(" + optsStr + ");", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension");
+        } catch (eDo) {
             Engine.run(opts);
-        }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension");
+        }
     }
 
     // Measurement button listeners
-    btnTop.onClick = function () { runMeas('linear', 'top', ScriptUI.environment.keyboardState.altKey); };
-    btnBott.onClick = function () { runMeas('linear', 'bott', ScriptUI.environment.keyboardState.altKey); };
-    btnLeft.onClick = function () { runMeas('linear', 'left', ScriptUI.environment.keyboardState.altKey); };
-    btnRight.onClick = function () { runMeas('linear', 'right', ScriptUI.environment.keyboardState.altKey); };
+    btnTop.onClick = function () { runMeas('linear', 'top', false); };
+    btnBott.onClick = function () { runMeas('linear', 'bott', false); };
+    btnLeft.onClick = function () { runMeas('linear', 'left', false); };
+    btnRight.onClick = function () { runMeas('linear', 'right', false); };
     btnCent.onClick = function () { runMeas('cent', '', false); };
 
     btnGapTop.onClick = function () { runMeas('gap_h', 'top', false); };
@@ -1220,9 +1249,11 @@
     // Clear and Default listeners
     btnClear.onClick = function () {
         if (app.documents.length === 0) return;
-        app.doScript(function () {
+        try {
+            app.doScript("$.global.idDimensionEngine.deleteAll();", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
+        } catch (eClr) {
             Engine.deleteAll();
-        }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
+        }
     };
 
     btnDefault.onClick = function () {

@@ -221,16 +221,39 @@ var IDMeasurement = (function () {
         var sel = doc.selection || app.selection;
         var selElem = (iterator !== -1) ? sel[iterator] : sel[0];
         
-        // Find target container (Page or Spread)
+        // Find target container (Page or Spread) with infinite-loop safeguard
         var targetParent = selElem.parent;
-        while (targetParent && targetParent.constructor.name !== "Spread" && 
-               targetParent.constructor.name !== "Page" && 
-               targetParent.constructor.name !== "MasterSpread") {
-            targetParent = targetParent.parent;
+        var safetyCounter = 0;
+        while (targetParent && safetyCounter < 25) {
+            safetyCounter++;
+            var cName = "";
+            try { cName = targetParent.constructor.name; } catch(e) { break; }
+            if (cName === "Spread" || cName === "Page" || cName === "MasterSpread") {
+                break;
+            }
+            if (cName === "Document" || cName === "Application" || !targetParent.parent || targetParent.parent === targetParent) {
+                targetParent = null;
+                break;
+            }
+            try {
+                targetParent = targetParent.parent;
+            } catch(e2) {
+                targetParent = null;
+                break;
+            }
         }
-        if (!targetParent) {
-            targetParent = app.activeWindow.activeSpread;
+        if (!targetParent || targetParent.constructor.name === "Document" || targetParent.constructor.name === "Application") {
+            try {
+                targetParent = app.activeWindow.activeSpread;
+            } catch(eWin) {
+                try {
+                    targetParent = doc.activeSpread || doc.spreads[0];
+                } catch(eDoc) {
+                    targetParent = null;
+                }
+            }
         }
+        if (!targetParent) return null;
 
         var defLayer = (selElem.itemLayer && selElem.itemLayer.isValid) ? selElem.itemLayer : doc.activeLayer;
         var lay = getOrCreateLayer(doc, layName, addLay, defLayer);
