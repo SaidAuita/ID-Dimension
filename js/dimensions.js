@@ -104,60 +104,67 @@ var IDMeasurement = (function () {
 
     function applyFontToTextFrame(tf, fontParam) {
         if (!tf || !fontParam || fontParam === 'default' || fontParam === '') return;
-        var p = tf.paragraphs[0];
         
         var cleanParam = String(fontParam).replace(/^(ArialMT|Arial-BoldMT)/, function(m){
             return (m === 'Arial-BoldMT') ? 'Arial Bold' : 'Arial';
         });
 
-        // 1. Direct assignment
-        try {
-            p.appliedFont = cleanParam;
-            return;
-        } catch (e0) {}
-
-        // 2. Direct itemByName
-        try {
-            var f1 = app.fonts.itemByName(cleanParam);
-            if (f1 && f1.isValid) {
-                p.appliedFont = f1;
-                return;
-            }
-        } catch (e1) {}
-
-        // 3. Try localized style variations (English / Russian / etc.)
         var baseFamily = cleanParam.split('\t')[0].replace(/\s+(Bold|Regular)$/i, '');
         var isBold = (cleanParam.toLowerCase().indexOf('bold') !== -1);
 
-        var stylesToTry = isBold 
-            ? ["Bold", "Полужирный", "Жирный", "Bold Italic", "Medium"]
-            : ["Regular", "Обычный", "Roman", "Book", "Normal", "Medium", "Light"];
+        var targetFont = null;
 
-        for (var i = 0; i < stylesToTry.length; i++) {
-            try {
-                var fTry = app.fonts.itemByName(baseFamily + "\t" + stylesToTry[i]);
-                if (fTry && fTry.isValid) {
-                    p.appliedFont = fTry;
-                    return;
-                }
-            } catch (eS) {}
+        // 1. Direct itemByName
+        try {
+            var f1 = app.fonts.itemByName(cleanParam);
+            if (f1 && f1.isValid) targetFont = f1;
+        } catch (e1) {}
+
+        // 2. Try localized style variations (English / Russian / etc.)
+        if (!targetFont) {
+            var stylesToTry = isBold 
+                ? ["Bold", "Полужирный", "Жирный", "Bold Italic", "Medium"]
+                : ["Regular", "Обычный", "Roman", "Book", "Normal", "Medium", "Light"];
+
+            for (var i = 0; i < stylesToTry.length; i++) {
+                try {
+                    var fTry = app.fonts.itemByName(baseFamily + "\t" + stylesToTry[i]);
+                    if (fTry && fTry.isValid) {
+                        targetFont = fTry;
+                        break;
+                    }
+                } catch (eS) {}
+            }
         }
 
-        // 4. Memory-cached bulk search via everyItem (100% reliable across any language)
-        try {
-            var allNames = app.fonts.everyItem().name;
-            var allFamilies = app.fonts.everyItem().fontFamily;
-            var targetLower = baseFamily.toLowerCase();
-            for (var k = 0; k < allFamilies.length; k++) {
-                if (allFamilies[k] && allFamilies[k].toLowerCase() === targetLower) {
-                    var candidate = app.fonts.itemByName(allNames[k]);
-                    if (candidate && candidate.isValid) {
-                        p.appliedFont = candidate;
-                        return;
+        // 3. Memory-cached bulk search via everyItem (100% reliable across any language)
+        if (!targetFont) {
+            try {
+                var allNames = app.fonts.everyItem().name;
+                var allFamilies = app.fonts.everyItem().fontFamily;
+                var targetLower = baseFamily.toLowerCase();
+                for (var k = 0; k < allFamilies.length; k++) {
+                    if (allFamilies[k] && allFamilies[k].toLowerCase() === targetLower) {
+                        var candidate = app.fonts.itemByName(allNames[k]);
+                        if (candidate && candidate.isValid) {
+                            targetFont = candidate;
+                            break;
+                        }
                     }
                 }
-            }
-        } catch (eBulk) {}
+            } catch (eBulk) {}
+        }
+
+        // Apply target font to story, texts, and paragraphs
+        if (targetFont) {
+            try { tf.parentStory.appliedFont = targetFont; } catch(eStory) {}
+            try { tf.texts[0].appliedFont = targetFont; } catch(eText) {}
+            try { tf.paragraphs[0].appliedFont = targetFont; } catch(ePara) {}
+        } else {
+            try { tf.parentStory.appliedFont = baseFamily; } catch(eStory2) {}
+            try { tf.texts[0].appliedFont = baseFamily; } catch(eText2) {}
+            try { tf.paragraphs[0].appliedFont = baseFamily; } catch(ePara2) {}
+        }
     }
 
     function isCircle(elem) {

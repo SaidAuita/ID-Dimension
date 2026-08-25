@@ -279,6 +279,7 @@ var FontPicker = (function () {
     return {
         init: init,
         setSelectedFont: setSelectedFont,
+        setFontByName: setSelectedFont,
         getSelectedFontName: getSelectedFontName
     };
 })();
