@@ -1,39 +1,36 @@
 /**
  * FontPicker Module for ID Dimension
- * Provides fast searchable dropdown for installed fonts with persistent caching and keyboard navigation.
+ * Provides curated popular font picker with instant search, recent fonts, and keyboard navigation.
  */
 var FontPicker = (function () {
     'use strict';
 
     var STORAGE_KEY_RECENT = 'id_dimension_recent_fonts';
-    var STORAGE_KEY_CACHE = 'id_dimension_font_cache_v1';
 
-    // Base popular fonts loaded immediately with zero latency
-    var BASE_FONTS = [
+    // Curated popular fonts
+    var POPULAR_FONTS = [
         { label: 'Default (Minion Pro / System)', name: 'default', family: 'Default', style: 'Regular' },
-        { label: 'Minion Pro Regular', name: 'MinionPro-Regular', family: 'Minion Pro', style: 'Regular' },
-        { label: 'Minion Pro Bold', name: 'MinionPro-Bold', family: 'Minion Pro', style: 'Bold' },
-        { label: 'Myriad Pro Regular', name: 'MyriadPro-Regular', family: 'Myriad Pro', style: 'Regular' },
-        { label: 'Myriad Pro Bold Cond', name: 'MyriadPro-BoldCond', family: 'Myriad Pro', style: 'Bold Cond' },
-        { label: 'Arial Regular', name: 'ArialMT', family: 'Arial', style: 'Regular' },
-        { label: 'Arial Bold', name: 'Arial-BoldMT', family: 'Arial', style: 'Bold' },
-        { label: 'Helvetica Regular', name: 'Helvetica', family: 'Helvetica', style: 'Regular' },
-        { label: 'Helvetica Bold', name: 'Helvetica-Bold', family: 'Helvetica', style: 'Bold' },
-        { label: 'Calibri Regular', name: 'Calibri', family: 'Calibri', style: 'Regular' },
-        { label: 'Calibri Bold', name: 'Calibri-Bold', family: 'Calibri', style: 'Bold' },
-        { label: 'Roboto Regular', name: 'Roboto-Regular', family: 'Roboto', style: 'Regular' },
-        { label: 'Roboto Bold', name: 'Roboto-Bold', family: 'Roboto', style: 'Bold' },
-        { label: 'Segoe UI Regular', name: 'SegoeUI', family: 'Segoe UI', style: 'Regular' },
-        { label: 'Segoe UI Bold', name: 'SegoeUI-Bold', family: 'Segoe UI', style: 'Bold' },
-        { label: 'Futura Bold', name: 'Futura-Bold', family: 'Futura', style: 'Bold' },
-        { label: 'Times New Roman Regular', name: 'TimesNewRomanPSMT', family: 'Times New Roman', style: 'Regular' },
-        { label: 'Times New Roman Bold', name: 'TimesNewRomanPS-BoldMT', family: 'Times New Roman', style: 'Bold' },
-        { label: 'Trebuchet MS', name: 'TrebuchetMS', family: 'Trebuchet MS', style: 'Regular' },
-        { label: 'Verdana', name: 'Verdana', family: 'Verdana', style: 'Regular' },
-        { label: 'Consolas', name: 'Consolas', family: 'Consolas', style: 'Regular' }
+        { label: 'Arial', name: 'Arial', family: 'Arial', style: 'Regular' },
+        { label: 'Arial Bold', name: 'Arial Bold', family: 'Arial', style: 'Bold' },
+        { label: 'Calibri', name: 'Calibri', family: 'Calibri', style: 'Regular' },
+        { label: 'Calibri Bold', name: 'Calibri Bold', family: 'Calibri', style: 'Bold' },
+        { label: 'Century Gothic', name: 'Century Gothic', family: 'Century Gothic', style: 'Regular' },
+        { label: 'Consolas', name: 'Consolas', family: 'Consolas', style: 'Regular' },
+        { label: 'Courier New', name: 'Courier New', family: 'Courier New', style: 'Regular' },
+        { label: 'Futura', name: 'Futura', family: 'Futura', style: 'Regular' },
+        { label: 'Helvetica', name: 'Helvetica', family: 'Helvetica', style: 'Regular' },
+        { label: 'Minion Pro', name: 'Minion Pro', family: 'Minion Pro', style: 'Regular' },
+        { label: 'Minion Pro Bold', name: 'Minion Pro Bold', family: 'Minion Pro', style: 'Bold' },
+        { label: 'Myriad Pro', name: 'Myriad Pro', family: 'Myriad Pro', style: 'Regular' },
+        { label: 'Myriad Pro Bold', name: 'Myriad Pro Bold', family: 'Myriad Pro', style: 'Bold' },
+        { label: 'Roboto', name: 'Roboto', family: 'Roboto', style: 'Regular' },
+        { label: 'Segoe UI', name: 'Segoe UI', family: 'Segoe UI', style: 'Regular' },
+        { label: 'Times New Roman', name: 'Times New Roman', family: 'Times New Roman', style: 'Regular' },
+        { label: 'Times New Roman Bold', name: 'Times New Roman Bold', family: 'Times New Roman', style: 'Bold' },
+        { label: 'Trebuchet MS', name: 'Trebuchet MS', family: 'Trebuchet MS', style: 'Regular' },
+        { label: 'Verdana', name: 'Verdana', family: 'Verdana', style: 'Regular' }
     ];
 
-    var allFonts = [];
     var recentFonts = [];
     var activeIndex = -1;
     var isDropdownOpen = false;
@@ -56,7 +53,6 @@ var FontPicker = (function () {
         }
 
         loadRecentFonts();
-        loadCachedFonts();
         renderList('');
 
         // Bind DOM events
@@ -78,9 +74,6 @@ var FontPicker = (function () {
                 closeDropdown();
             }
         });
-
-        // Request host fonts in background
-        fetchHostFonts();
     }
 
     function loadRecentFonts() {
@@ -108,205 +101,135 @@ var FontPicker = (function () {
         } catch (e) {}
     }
 
-    function loadCachedFonts() {
-        allFonts = BASE_FONTS.slice();
-        try {
-            var raw = localStorage.getItem(STORAGE_KEY_CACHE);
-            if (raw) {
-                var cached = JSON.parse(raw);
-                if (cached && cached.length > 0) {
-                    mergeHostFonts(cached);
-                }
-            }
-        } catch (e) {}
-    }
-
-    function fetchHostFonts() {
-        if (typeof csInterface === 'undefined' || !csInterface) return;
-
-        csInterface.evalScript('getAllInstalledFonts()', function (result) {
-            if (!result || result === 'EvalScript error.' || result === 'null' || result === '[]') {
-                return;
-            }
-            try {
-                var parsedList = [];
-                var rawLines = result.split('\n');
-                for (var i = 0; i < rawLines.length; i++) {
-                    var line = rawLines[i].replace(/^\s+|\s+$/g, '');
-                    if (!line) continue;
-                    var parts = line.split('@@');
-                    var psName = parts[0] || '';
-                    var family = parts[1] || psName;
-                    var style = parts[2] || '';
-                    if (psName) {
-                        var lbl = (style && style !== 'Regular') ? (family + ' ' + style) : family;
-                        parsedList.push({
-                            label: lbl,
-                            name: psName,
-                            family: family,
-                            style: style || 'Regular'
-                        });
-                    }
-                }
-                if (parsedList.length > 0) {
-                    localStorage.setItem(STORAGE_KEY_CACHE, JSON.stringify(parsedList));
-                    mergeHostFonts(parsedList);
-                    if (isDropdownOpen) {
-                        renderList(elements.input.value.trim());
-                    }
-                }
-            } catch (e) {}
-        });
-    }
-
-    function mergeHostFonts(hostList) {
-        var existingNames = {};
-        allFonts = [BASE_FONTS[0]]; // Always keep Default at index 0
-        existingNames['default'] = true;
-
-        // Add base fonts
-        for (var b = 1; b < BASE_FONTS.length; b++) {
-            var bf = BASE_FONTS[b];
-            allFonts.push(bf);
-            existingNames[bf.name.toLowerCase()] = true;
-            existingNames[bf.label.toLowerCase()] = true;
-        }
-
-        // Add host fonts
-        for (var i = 0; i < hostList.length; i++) {
-            var item = hostList[i];
-            if (!item || !item.name) continue;
-            var key = item.name.toLowerCase();
-            if (!existingNames[key]) {
-                existingNames[key] = true;
-                allFonts.push(item);
-            }
-        }
-    }
-
-    function renderList(filterText) {
+    function renderList(query) {
+        if (!elements.list) return;
         elements.list.innerHTML = '';
         activeIndex = -1;
 
-        var lowerFilter = filterText ? filterText.toLowerCase() : '';
-        var itemsToRender = [];
+        query = (query || '').toLowerCase();
 
-        if (!lowerFilter) {
-            // Show recent fonts if available
-            if (recentFonts.length > 0) {
-                var recentHeader = document.createElement('div');
-                recentHeader.className = 'font-group-header';
-                recentHeader.textContent = '⭐ Recent Fonts';
-                elements.list.appendChild(recentHeader);
-
-                for (var r = 0; r < recentFonts.length; r++) {
-                    createFontElement(recentFonts[r], itemsToRender);
-                }
-
-                var allHeader = document.createElement('div');
-                allHeader.className = 'font-group-header';
-                allHeader.textContent = 'All Fonts';
-                elements.list.appendChild(allHeader);
-            }
-
-            for (var i = 0; i < allFonts.length; i++) {
-                createFontElement(allFonts[i], itemsToRender);
-            }
-        } else {
-            // Filter fonts
-            for (var j = 0; j < allFonts.length; j++) {
-                var f = allFonts[j];
-                if (f.label.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    f.family.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    f.name.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    f.style.toLowerCase().indexOf(lowerFilter) !== -1) {
-                    createFontElement(f, itemsToRender);
-                }
-            }
-            if (itemsToRender.length === 0) {
-                var noRes = document.createElement('div');
-                noRes.className = 'font-no-results';
-                noRes.textContent = 'No matching fonts found';
-                elements.list.appendChild(noRes);
-            }
-        }
-    }
-
-    function createFontElement(fontItem, trackerArray) {
-        var el = document.createElement('div');
-        el.className = 'font-item';
-        if (elements.hidden.value === fontItem.name) {
-            el.classList.add('selected');
-        }
-
-        var labelSpan = document.createElement('span');
-        labelSpan.className = 'font-item-label';
-        labelSpan.textContent = fontItem.label;
-
-        var sampleSpan = document.createElement('span');
-        sampleSpan.className = 'font-item-sample';
-        sampleSpan.textContent = fontItem.style || '';
-
-        el.appendChild(labelSpan);
-        el.appendChild(sampleSpan);
-
-        el.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            selectFont(fontItem);
+        var filtered = POPULAR_FONTS.filter(function (f) {
+            if (!query) return true;
+            return f.label.toLowerCase().indexOf(query) !== -1 ||
+                   f.name.toLowerCase().indexOf(query) !== -1 ||
+                   f.family.toLowerCase().indexOf(query) !== -1;
         });
 
-        elements.list.appendChild(el);
-        trackerArray.push({ el: el, font: fontItem });
-    }
+        // 1. Recent section (only when not searching)
+        if (!query && recentFonts.length > 0) {
+            var headerRecent = document.createElement('div');
+            headerRecent.className = 'font-group-header';
+            headerRecent.textContent = '⭐ Recent Fonts';
+            elements.list.appendChild(headerRecent);
 
-    function selectFont(fontItem) {
-        if (!fontItem) return;
-        elements.input.value = fontItem.label;
-        elements.hidden.value = fontItem.name;
-        saveRecentFont(fontItem);
-        closeDropdown();
+            recentFonts.forEach(function (rf) {
+                var item = createFontItemElement(rf);
+                elements.list.appendChild(item);
+            });
 
-        // Trigger change event
-        var event = new Event('change', { bubbles: true });
-        elements.hidden.dispatchEvent(event);
-    }
+            var headerAll = document.createElement('div');
+            headerAll.className = 'font-group-header';
+            headerAll.textContent = 'Popular Fonts';
+            elements.list.appendChild(headerAll);
+        }
 
-    function setFontByName(fontName) {
-        if (!fontName) fontName = 'default';
-        elements.hidden.value = fontName;
-
-        if (fontName === 'default') {
-            elements.input.value = 'Default (Minion Pro / System)';
+        if (filtered.length === 0) {
+            var empty = document.createElement('div');
+            empty.className = 'font-empty';
+            empty.textContent = 'No matching fonts';
+            elements.list.appendChild(empty);
             return;
         }
 
-        for (var i = 0; i < allFonts.length; i++) {
-            if (allFonts[i].name === fontName || allFonts[i].family === fontName || allFonts[i].label === fontName) {
-                elements.input.value = allFonts[i].label;
-                return;
+        filtered.forEach(function (f) {
+            var item = createFontItemElement(f);
+            elements.list.appendChild(item);
+        });
+    }
+
+    function createFontItemElement(fontObj) {
+        var el = document.createElement('div');
+        el.className = 'font-item';
+        if (elements.hidden && elements.hidden.value === fontObj.name) {
+            el.classList.add('selected');
+        }
+        el.dataset.fontName = fontObj.name;
+        el.dataset.fontLabel = fontObj.label;
+
+        var nameSpan = document.createElement('span');
+        nameSpan.className = 'font-item-name';
+        nameSpan.textContent = fontObj.label;
+        nameSpan.style.fontFamily = '"' + fontObj.family + '", sans-serif';
+
+        var styleSpan = document.createElement('span');
+        styleSpan.className = 'font-item-style';
+        styleSpan.textContent = fontObj.style || '';
+
+        el.appendChild(nameSpan);
+        el.appendChild(styleSpan);
+
+        el.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            selectFont(fontObj);
+        });
+
+        return el;
+    }
+
+    function selectFont(fontObj) {
+        if (!fontObj) return;
+        if (elements.hidden) elements.hidden.value = fontObj.name;
+        if (elements.input) elements.input.value = fontObj.label;
+        saveRecentFont(fontObj);
+        closeDropdown();
+
+        if (typeof Presets !== 'undefined' && Presets.saveCurrentState) {
+            Presets.saveCurrentState();
+        }
+    }
+
+    function setSelectedFont(fontName) {
+        if (!fontName) fontName = 'default';
+        var found = null;
+        for (var i = 0; i < POPULAR_FONTS.length; i++) {
+            if (POPULAR_FONTS[i].name === fontName || POPULAR_FONTS[i].label === fontName || POPULAR_FONTS[i].family === fontName) {
+                found = POPULAR_FONTS[i];
+                break;
             }
         }
-        elements.input.value = fontName;
+        if (!found) {
+            for (var r = 0; r < recentFonts.length; r++) {
+                if (recentFonts[r].name === fontName) {
+                    found = recentFonts[r];
+                    break;
+                }
+            }
+        }
+        if (!found) {
+            found = { label: fontName, name: fontName, family: fontName, style: '' };
+        }
+
+        if (elements.hidden) elements.hidden.value = found.name;
+        if (elements.input) elements.input.value = found.label;
     }
 
     function getSelectedFontName() {
-        return elements.hidden ? (elements.hidden.value || 'default') : 'default';
+        return elements.hidden ? elements.hidden.value : 'default';
     }
 
     function openDropdown() {
-        if (isDropdownOpen) return;
-        elements.dropdown.classList.add('open');
-        isDropdownOpen = true;
+        if (elements.dropdown) {
+            elements.dropdown.classList.add('open');
+            isDropdownOpen = true;
+        }
     }
 
     function closeDropdown() {
-        if (!isDropdownOpen) return;
-        elements.dropdown.classList.remove('open');
-        isDropdownOpen = false;
+        if (elements.dropdown) {
+            elements.dropdown.classList.remove('open');
+            isDropdownOpen = false;
+        }
         activeIndex = -1;
-
-        // If user typed something custom, restore label corresponding to current hidden value
-        setFontByName(elements.hidden.value);
     }
 
     function handleKeyDown(e) {
@@ -316,25 +239,27 @@ var FontPicker = (function () {
             return;
         }
 
-        var items = elements.list.querySelectorAll('.font-item');
-        if (items.length === 0) return;
+        var items = elements.list ? elements.list.querySelectorAll('.font-item') : [];
+        if (!items || items.length === 0) return;
 
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            activeIndex++;
-            if (activeIndex >= items.length) activeIndex = 0;
+            activeIndex = (activeIndex + 1) % items.length;
             updateActiveItem(items);
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
-            activeIndex--;
-            if (activeIndex < 0) activeIndex = items.length - 1;
+            activeIndex = (activeIndex - 1 + items.length) % items.length;
             updateActiveItem(items);
         } else if (e.key === 'Enter') {
             e.preventDefault();
             if (activeIndex >= 0 && activeIndex < items.length) {
-                items[activeIndex].dispatchEvent(new MouseEvent('mousedown'));
+                var selectedItem = items[activeIndex];
+                var fName = selectedItem.dataset.fontName;
+                var fLabel = selectedItem.dataset.fontLabel;
+                selectFont({ name: fName, label: fLabel, family: fLabel });
             } else if (items.length > 0) {
-                items[0].dispatchEvent(new MouseEvent('mousedown'));
+                var firstItem = items[0];
+                selectFont({ name: firstItem.dataset.fontName, label: firstItem.dataset.fontLabel, family: firstItem.dataset.fontLabel });
             }
         } else if (e.key === 'Escape') {
             closeDropdown();
@@ -353,7 +278,7 @@ var FontPicker = (function () {
 
     return {
         init: init,
-        setFontByName: setFontByName,
+        setSelectedFont: setSelectedFont,
         getSelectedFontName: getSelectedFontName
     };
 })();

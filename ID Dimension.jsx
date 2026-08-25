@@ -55,25 +55,25 @@
 
     var POPULAR_FONTS = [
         { label: "Default (Minion Pro / System)", name: "default" },
-        { label: "Minion Pro Regular", name: "MinionPro-Regular" },
-        { label: "Minion Pro Bold", name: "MinionPro-Bold" },
-        { label: "Myriad Pro Regular", name: "MyriadPro-Regular" },
-        { label: "Myriad Pro Bold Cond", name: "MyriadPro-BoldCond" },
-        { label: "Arial Regular", name: "ArialMT" },
-        { label: "Arial Bold", name: "Arial-BoldMT" },
-        { label: "Helvetica Regular", name: "Helvetica" },
-        { label: "Helvetica Bold", name: "Helvetica-Bold" },
-        { label: "Calibri Regular", name: "Calibri" },
-        { label: "Calibri Bold", name: "Calibri-Bold" },
-        { label: "Roboto Regular", name: "Roboto-Regular" },
-        { label: "Roboto Bold", name: "Roboto-Bold" },
-        { label: "Segoe UI Regular", name: "SegoeUI" },
-        { label: "Segoe UI Bold", name: "SegoeUI-Bold" },
-        { label: "Futura Bold", name: "Futura-Bold" },
-        { label: "Times New Roman Bold", name: "TimesNewRomanPS-BoldMT" },
-        { label: "Trebuchet MS", name: "TrebuchetMS" },
-        { label: "Verdana", name: "Verdana" },
-        { label: "Consolas", name: "Consolas" }
+        { label: "Arial", name: "Arial" },
+        { label: "Arial Bold", name: "Arial Bold" },
+        { label: "Calibri", name: "Calibri" },
+        { label: "Calibri Bold", name: "Calibri Bold" },
+        { label: "Century Gothic", name: "Century Gothic" },
+        { label: "Consolas", name: "Consolas" },
+        { label: "Courier New", name: "Courier New" },
+        { label: "Futura", name: "Futura" },
+        { label: "Helvetica", name: "Helvetica" },
+        { label: "Minion Pro", name: "Minion Pro" },
+        { label: "Minion Pro Bold", name: "Minion Pro Bold" },
+        { label: "Myriad Pro", name: "Myriad Pro" },
+        { label: "Myriad Pro Bold", name: "Myriad Pro Bold" },
+        { label: "Roboto", name: "Roboto" },
+        { label: "Segoe UI", name: "Segoe UI" },
+        { label: "Times New Roman", name: "Times New Roman" },
+        { label: "Times New Roman Bold", name: "Times New Roman Bold" },
+        { label: "Trebuchet MS", name: "Trebuchet MS" },
+        { label: "Verdana", name: "Verdana" }
     ];
 
     function parseScale(val) {
@@ -233,20 +233,60 @@
 
         applyFontToTextFrame: function (tf, fontParam) {
             if (!tf || !fontParam || fontParam === 'default' || fontParam === '') return;
+            var p = tf.paragraphs[0];
+            
+            var cleanParam = String(fontParam).replace(/^(ArialMT|Arial-BoldMT)/, function(m){
+                return (m === 'Arial-BoldMT') ? 'Arial Bold' : 'Arial';
+            });
+
+            // 1. Direct assignment
             try {
-                tf.paragraphs[0].appliedFont = fontParam;
+                p.appliedFont = cleanParam;
                 return;
             } catch (e0) {}
+
+            // 2. Direct itemByName
             try {
-                tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam);
-                return;
-            } catch (e1) {}
-            try {
-                if (fontParam.indexOf('\t') === -1) {
-                    tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam + '\tRegular');
+                var f1 = app.fonts.itemByName(cleanParam);
+                if (f1 && f1.isValid) {
+                    p.appliedFont = f1;
                     return;
                 }
-            } catch (e2) {}
+            } catch (e1) {}
+
+            // 3. Try localized style variations (English / Russian / etc.)
+            var baseFamily = cleanParam.split('\t')[0].replace(/\s+(Bold|Regular)$/i, '');
+            var isBold = (cleanParam.toLowerCase().indexOf('bold') !== -1);
+
+            var stylesToTry = isBold 
+                ? ["Bold", "Полужирный", "Жирный", "Bold Italic", "Medium"]
+                : ["Regular", "Обычный", "Roman", "Book", "Normal", "Medium", "Light"];
+
+            for (var i = 0; i < stylesToTry.length; i++) {
+                try {
+                    var fTry = app.fonts.itemByName(baseFamily + "\t" + stylesToTry[i]);
+                    if (fTry && fTry.isValid) {
+                        p.appliedFont = fTry;
+                        return;
+                    }
+                } catch (eS) {}
+            }
+
+            // 4. Memory-cached bulk search via everyItem (100% reliable across any language)
+            try {
+                var allNames = app.fonts.everyItem().name;
+                var allFamilies = app.fonts.everyItem().fontFamily;
+                var targetLower = baseFamily.toLowerCase();
+                for (var k = 0; k < allFamilies.length; k++) {
+                    if (allFamilies[k] && allFamilies[k].toLowerCase() === targetLower) {
+                        var candidate = app.fonts.itemByName(allNames[k]);
+                        if (candidate && candidate.isValid) {
+                            p.appliedFont = candidate;
+                            return;
+                        }
+                    }
+                }
+            } catch (eBulk) {}
         },
 
         isCircle: function (elem) {

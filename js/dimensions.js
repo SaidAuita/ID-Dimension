@@ -104,20 +104,60 @@ var IDMeasurement = (function () {
 
     function applyFontToTextFrame(tf, fontParam) {
         if (!tf || !fontParam || fontParam === 'default' || fontParam === '') return;
+        var p = tf.paragraphs[0];
+        
+        var cleanParam = String(fontParam).replace(/^(ArialMT|Arial-BoldMT)/, function(m){
+            return (m === 'Arial-BoldMT') ? 'Arial Bold' : 'Arial';
+        });
+
+        // 1. Direct assignment
         try {
-            tf.paragraphs[0].appliedFont = fontParam;
+            p.appliedFont = cleanParam;
             return;
         } catch (e0) {}
+
+        // 2. Direct itemByName
         try {
-            tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam);
-            return;
-        } catch (e1) {}
-        try {
-            if (fontParam.indexOf('\t') === -1) {
-                tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam + '\tRegular');
+            var f1 = app.fonts.itemByName(cleanParam);
+            if (f1 && f1.isValid) {
+                p.appliedFont = f1;
                 return;
             }
-        } catch (e2) {}
+        } catch (e1) {}
+
+        // 3. Try localized style variations (English / Russian / etc.)
+        var baseFamily = cleanParam.split('\t')[0].replace(/\s+(Bold|Regular)$/i, '');
+        var isBold = (cleanParam.toLowerCase().indexOf('bold') !== -1);
+
+        var stylesToTry = isBold 
+            ? ["Bold", "Полужирный", "Жирный", "Bold Italic", "Medium"]
+            : ["Regular", "Обычный", "Roman", "Book", "Normal", "Medium", "Light"];
+
+        for (var i = 0; i < stylesToTry.length; i++) {
+            try {
+                var fTry = app.fonts.itemByName(baseFamily + "\t" + stylesToTry[i]);
+                if (fTry && fTry.isValid) {
+                    p.appliedFont = fTry;
+                    return;
+                }
+            } catch (eS) {}
+        }
+
+        // 4. Memory-cached bulk search via everyItem (100% reliable across any language)
+        try {
+            var allNames = app.fonts.everyItem().name;
+            var allFamilies = app.fonts.everyItem().fontFamily;
+            var targetLower = baseFamily.toLowerCase();
+            for (var k = 0; k < allFamilies.length; k++) {
+                if (allFamilies[k] && allFamilies[k].toLowerCase() === targetLower) {
+                    var candidate = app.fonts.itemByName(allNames[k]);
+                    if (candidate && candidate.isValid) {
+                        p.appliedFont = candidate;
+                        return;
+                    }
+                }
+            }
+        } catch (eBulk) {}
     }
 
     function isCircle(elem) {
