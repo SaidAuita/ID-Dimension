@@ -105,18 +105,17 @@ var IDMeasurement = (function () {
     function applyFontToTextFrame(tf, fontParam) {
         if (!tf || !fontParam || fontParam === 'default' || fontParam === '') return;
         try {
+            tf.paragraphs[0].appliedFont = fontParam;
+            return;
+        } catch (e0) {}
+        try {
             tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam);
             return;
         } catch (e1) {}
         try {
-            var allF = app.fonts;
-            var len = allF.length;
-            for (var f = 0; f < len; f++) {
-                var fnt = allF[f];
-                if (fnt.name === fontParam || fnt.fontFamily === fontParam || fnt.postscriptName === fontParam) {
-                    tf.paragraphs[0].appliedFont = fnt;
-                    return;
-                }
+            if (fontParam.indexOf('\t') === -1) {
+                tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam + '\tRegular');
+                return;
             }
         } catch (e2) {}
     }
@@ -741,22 +740,17 @@ var IDMeasurement = (function () {
         getAllFonts: function () {
             var lines = [];
             try {
-                var fontCollection = app.fonts;
-                if (fontCollection) {
-                    var len = fontCollection.length;
-                    for (var i = 0; i < len; i++) {
-                        try {
-                            var f = fontCollection[i];
-                            var postscriptName = '';
-                            var familyName = '';
-                            var styleName = '';
-                            try { postscriptName = f.name || ''; } catch(e1) {}
-                            try { familyName = f.fontFamily || postscriptName; } catch(e2) { familyName = postscriptName; }
-                            try { styleName = f.fontStyleName || ''; } catch(e3) {}
-                            if (postscriptName) {
-                                lines.push(postscriptName + '@@' + familyName + '@@' + styleName);
-                            }
-                        } catch(eItem) {}
+                var names = app.fonts.everyItem().name;
+                var families = app.fonts.everyItem().fontFamily;
+                var styles = app.fonts.everyItem().fontStyleName;
+                if (names && names.length) {
+                    for (var i = 0; i < names.length; i++) {
+                        var n = names[i] || '';
+                        var f = (families && families[i]) ? families[i] : n;
+                        var s = (styles && styles[i]) ? styles[i] : '';
+                        if (n) {
+                            lines.push(n + '@@' + f + '@@' + s);
+                        }
                     }
                 }
             } catch (eAll) {}

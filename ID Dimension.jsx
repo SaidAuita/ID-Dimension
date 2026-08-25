@@ -234,18 +234,17 @@
         applyFontToTextFrame: function (tf, fontParam) {
             if (!tf || !fontParam || fontParam === 'default' || fontParam === '') return;
             try {
+                tf.paragraphs[0].appliedFont = fontParam;
+                return;
+            } catch (e0) {}
+            try {
                 tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam);
                 return;
             } catch (e1) {}
             try {
-                var allF = app.fonts;
-                var len = allF.length;
-                for (var f = 0; f < len; f++) {
-                    var fnt = allF[f];
-                    if (fnt.name === fontParam || fnt.fontFamily === fontParam || fnt.postscriptName === fontParam) {
-                        tf.paragraphs[0].appliedFont = fnt;
-                        return;
-                    }
+                if (fontParam.indexOf('\t') === -1) {
+                    tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam + '\tRegular');
+                    return;
                 }
             } catch (e2) {}
         },
