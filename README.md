@@ -1,6 +1,6 @@
 # ID Dimension v1.4
 
-![ID Dimension Interface](images/ID_Dimension.png)
+![ID Dimension Interface](images/ID_Dimension_1_4.png)
 
 *( 🇬🇧 [English](#english) | 🇷🇺 [Русский](#русский) )*
 
