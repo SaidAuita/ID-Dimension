@@ -1,5 +1,5 @@
 /**
- * ID Dimension v1.3 - Backend ExtendScript for Adobe InDesign (ES3 Compatible)
+ * ID Dimension v1.4 - Backend ExtendScript for Adobe InDesign (ES3 Compatible)
  * Creates measurement lines: height, width, center, radius, diameter for selected objects.
  */
 //@target indesign
@@ -32,6 +32,13 @@ var IDMeasurement = (function () {
             return num;
         }
         return 1;
+    }
+
+    function formatNumber(num, dec) {
+        if (isNaN(num) || !isFinite(num)) return "0";
+        var d = parseInt(dec, 10);
+        if (isNaN(d) || d < 0) d = 0;
+        return Number(num.toFixed(d)).toFixed(d);
     }
 
     function getOrCreateCmykColor(doc, comp) {
@@ -95,6 +102,25 @@ var IDMeasurement = (function () {
         return lay;
     }
 
+    function applyFontToTextFrame(tf, fontParam) {
+        if (!tf || !fontParam || fontParam === 'default' || fontParam === '') return;
+        try {
+            tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam);
+            return;
+        } catch (e1) {}
+        try {
+            var allF = app.fonts;
+            var len = allF.length;
+            for (var f = 0; f < len; f++) {
+                var fnt = allF[f];
+                if (fnt.name === fontParam || fnt.fontFamily === fontParam || fnt.postscriptName === fontParam) {
+                    tf.paragraphs[0].appliedFont = fnt;
+                    return;
+                }
+            }
+        } catch (e2) {}
+    }
+
     function isCircle(elem) {
         try {
             if (!elem || elem.constructor.name === "Group") return false;
@@ -111,43 +137,63 @@ var IDMeasurement = (function () {
 
     // Horizontal gap between 2 elements
     function getRectByHorizGap(sel) {
+        if (!sel || sel.length < 2) return null;
         var b1 = sel[0].geometricBounds; // [top, left, bott, right]
         var b2 = sel[1].geometricBounds;
-        var left, right, top, bott;
+        if (!b1 || !b2) return null;
 
-        if (b1[3] <= b2[1]) {
-            left = b1[3];
-            right = b2[1];
-        } else if (b2[3] <= b1[1]) {
-            left = b2[3];
-            right = b1[1];
-        } else {
-            return false;
+        var leftObj = (b1[1] <= b2[1]) ? b1 : b2;
+        var rightObj = (b1[1] <= b2[1]) ? b2 : b1;
+
+        var left = leftObj[3];   // right edge of leftmost object
+        var right = rightObj[1];  // left edge of rightmost object
+
+        if (right <= left) {
+            left = Math.min(leftObj[3], rightObj[1]);
+            right = Math.max(leftObj[3], rightObj[1]);
+            if (right === left) right = left + 1;
         }
 
-        top = Math.min(b1[0], b2[0]);
-        bott = Math.max(b1[2], b2[2]);
+        var top = Math.min(b1[0], b2[0]);
+        var bott = Math.max(b1[2], b2[2]);
+        var overlapTop = Math.max(b1[0], b2[0]);
+        var overlapBot = Math.min(b1[2], b2[2]);
+        if (overlapBot > overlapTop) {
+            top = overlapTop;
+            bott = overlapBot;
+        }
+
         return [top, left, bott, right];
     }
 
     // Vertical gap between 2 elements
     function getRectByVertGap(sel) {
+        if (!sel || sel.length < 2) return null;
         var b1 = sel[0].geometricBounds; // [top, left, bott, right]
         var b2 = sel[1].geometricBounds;
-        var left, right, top, bott;
+        if (!b1 || !b2) return null;
 
-        if (b1[2] <= b2[0]) {
-            top = b1[2];
-            bott = b2[0];
-        } else if (b2[2] <= b1[0]) {
-            top = b2[2];
-            bott = b1[0];
-        } else {
-            return false;
+        var topObj = (b1[0] <= b2[0]) ? b1 : b2;
+        var botObj = (b1[0] <= b2[0]) ? b2 : b1;
+
+        var top = topObj[2];    // bottom edge of upper object
+        var bott = botObj[0];   // top edge of lower object
+
+        if (bott <= top) {
+            top = Math.min(topObj[2], botObj[0]);
+            bott = Math.max(topObj[2], botObj[0]);
+            if (bott === top) bott = top + 1;
         }
 
-        left = Math.min(b1[1], b2[1]);
-        right = Math.max(b1[3], b2[3]);
+        var left = Math.min(b1[1], b2[1]);
+        var right = Math.max(b1[3], b2[3]);
+        var overlapLeft = Math.max(b1[1], b2[1]);
+        var overlapRight = Math.min(b1[3], b2[3]);
+        if (overlapRight > overlapLeft) {
+            left = overlapLeft;
+            right = overlapRight;
+        }
+
         return [top, left, bott, right];
     }
 
@@ -166,6 +212,7 @@ var IDMeasurement = (function () {
         var addLay = u.addLay;
         var layName = u.layName;
         var outArtboard = u.outArtboard;
+        var fontName = u.fontName || 'default';
 
         var arH = arW / 1.9;
         var col = getOrCreateCmykColor(doc, u.colComp);
@@ -198,18 +245,18 @@ var IDMeasurement = (function () {
             right = bounds[3];
             elW = right - left;
             elH = bott - top;
-        } else if (measType === 'linear') {
-            switch (side) {
-                case 'top':
-                case 'bott':
-                    rect = getRectByHorizGap(sel);
-                    break;
-                case 'left':
-                case 'right':
-                    rect = getRectByVertGap(sel);
-                    break;
-            }
-            if (rect === false) return null;
+        } else if (measType === 'gap_h' || (measType === 'linear' && (side === 'top' || side === 'bott'))) {
+            rect = getRectByHorizGap(sel);
+            if (!rect) return null;
+            top = rect[0];
+            left = rect[1];
+            bott = rect[2];
+            right = rect[3];
+            elW = right - left;
+            elH = bott - top;
+        } else if (measType === 'gap_v' || (measType === 'linear' && (side === 'left' || side === 'right'))) {
+            rect = getRectByVertGap(sel);
+            if (!rect) return null;
             top = rect[0];
             left = rect[1];
             bott = rect[2];
@@ -218,8 +265,11 @@ var IDMeasurement = (function () {
             elH = bott - top;
         }
 
+        if (isNaN(elW) || !isFinite(elW) || elW <= 0) elW = 0.001;
+        if (isNaN(elH) || !isFinite(elH) || elH <= 0) elH = 0.001;
+
         // Out Page positioning
-        if (outArtboard && measType === 'linear') {
+        if (outArtboard && (measType === 'linear' || measType === 'gap_h' || measType === 'gap_v')) {
             var targetPage = selElem.parentPage || app.activeWindow.activePage;
             if (targetPage && targetPage.isValid) {
                 var pb = targetPage.bounds; // [top, left, bott, right]
@@ -232,20 +282,24 @@ var IDMeasurement = (function () {
             }
         }
 
-        var p = Math.pow(10, precis);
         var unitType = u.unitType || 'mm';
         var unitScale = 2.834645668; // mm in pt
         if (unitType === 'cm') unitScale = 28.34645668;
         else if (unitType === 'in') unitScale = 72.0;
+        else if (unitType === 'pt' || unitType === 'px') unitScale = 1.0;
+        
         var scaleVal = (u.scale !== undefined) ? parseScale(u.scale) : 1;
 
-        var lablW = Math.round((elW * scaleVal) / (unitScale / p)) / p;
-        var lablH = Math.round((elH * scaleVal) / (unitScale / p)) / p;
-        var lablR = Math.round(((elW * scaleVal) / 2) / (unitScale / p)) / p;
+        var valW = (elW * scaleVal) / unitScale;
+        var valH = (elH * scaleVal) / unitScale;
+        var valR = ((elW * scaleVal) / 2) / unitScale;
+
+        var lablW = formatNumber(valW, precis);
+        var lablH = formatNumber(valH, precis);
+        var lablR = formatNumber(valR, precis);
 
         // Extension past dimension line for witness lines (1.5 - 2 mm)
         var ext = Math.max(stopBot, 2.0 * PT_TO_MM);
-
         var createdItems = [];
 
         // --- Drawing subroutines ---
@@ -291,6 +345,8 @@ var IDMeasurement = (function () {
             pr.pointSize = fontSize;
             if (col) pr.fillColor = col;
 
+            applyFontToTextFrame(tf, fontName);
+
             try {
                 tf.fit(FitOptions.FRAME_TO_CONTENT);
             } catch (e) {}
@@ -322,10 +378,14 @@ var IDMeasurement = (function () {
         var midX = left + elW / 2;
         var midY = top + elH / 2;
 
-        if (measType === 'linear') {
+        if (measType === 'linear' || measType === 'gap_h' || measType === 'gap_v') {
+            var activeSide = side;
+            if (measType === 'gap_h' && !activeSide) activeSide = 'top';
+            if (measType === 'gap_v' && !activeSide) activeSide = 'left';
+
             var labelText, tfInfo, yPos, xPos, tw, th;
 
-            if (side === 'top') {
+            if (activeSide === 'top') {
                 labelText = lablW + units;
                 yPos = top - stopTop;
                 
@@ -356,7 +416,7 @@ var IDMeasurement = (function () {
                     tfInfo.frame.geometricBounds = [yPos - th / 2, right + arW * 2 + gap, yPos + th / 2, right + arW * 2 + gap + tw];
                 }
 
-            } else if (side === 'bott') {
+            } else if (activeSide === 'bott') {
                 labelText = lablW + units;
                 yPos = bott + stopTop;
 
@@ -369,6 +429,7 @@ var IDMeasurement = (function () {
                 _addLine([right, bott + stopBot], [right, yPos + ext]);
 
                 if (tw < (elW - gap * 2 - arW * 3)) {
+                    // Inside layout
                     _addLine([left, yPos], [midX - tw / 2 - gap, yPos]);
                     _addLine([midX + tw / 2 + gap, yPos], [right, yPos]);
                     _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
@@ -386,23 +447,22 @@ var IDMeasurement = (function () {
                     tfInfo.frame.geometricBounds = [yPos - th / 2, right + arW * 2 + gap, yPos + th / 2, right + arW * 2 + gap + tw];
                 }
 
-            } else if (side === 'left') {
+            } else if (activeSide === 'left') {
                 labelText = lablH + units;
                 xPos = left - stopTop;
+
+                tfInfo = _addText(labelText, xPos, midY, -90);
+                tw = tfInfo.width;
+                th = tfInfo.height;
 
                 // Stop witness lines extending past dimension line by ext
                 _addLine([left - stopBot, top], [xPos - ext, top]);
                 _addLine([left - stopBot, bott], [xPos - ext, bott]);
 
-                // Rotate 90 deg so text reads bottom to top (standard drafting)
-                tfInfo = _addText(labelText, xPos, midY, 90);
-                tw = tfInfo.width; // text string length along vertical axis
-                th = tfInfo.height;
-
-                if (tw < (elH - gap * 2 - arW * 3)) {
-                    // Inside lines with gap for rotated text
-                    _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
-                    _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
+                if (th < (elH - gap * 2 - arW * 3)) {
+                    // Inside layout
+                    _addLine([xPos, top], [xPos, midY - th / 2 - gap]);
+                    _addLine([xPos, midY + th / 2 + gap], [xPos, bott]);
                     _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
                     _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
                 } else {
@@ -418,22 +478,22 @@ var IDMeasurement = (function () {
                     tfInfo.frame.geometricBounds = [bott + arW * 2 + gap, xPos - th / 2, bott + arW * 2 + gap + tw, xPos + th / 2];
                 }
 
-            } else if (side === 'right') {
+            } else if (activeSide === 'right') {
                 labelText = lablH + units;
                 xPos = right + stopTop;
+
+                tfInfo = _addText(labelText, xPos, midY, -90);
+                tw = tfInfo.width;
+                th = tfInfo.height;
 
                 // Stop witness lines extending past dimension line by ext
                 _addLine([right + stopBot, top], [xPos + ext, top]);
                 _addLine([right + stopBot, bott], [xPos + ext, bott]);
 
-                // Rotate 90 deg so text reads bottom to top
-                tfInfo = _addText(labelText, xPos, midY, 90);
-                tw = tfInfo.width; // text string length along vertical axis
-                th = tfInfo.height;
-
-                if (tw < (elH - gap * 2 - arW * 3)) {
-                    _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
-                    _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
+                if (th < (elH - gap * 2 - arW * 3)) {
+                    // Inside layout
+                    _addLine([xPos, top], [xPos, midY - th / 2 - gap]);
+                    _addLine([xPos, midY + th / 2 + gap], [xPos, bott]);
                     _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
                     _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
                 } else {
@@ -454,12 +514,15 @@ var IDMeasurement = (function () {
             if (!isCircle(selElem)) {
                 return null;
             }
-            var isBr = (side === 'br' || side === 'bott');
+            var isLeft = (side === 'tl' || side === 'bl' || side === 'left');
+            var isBottom = (side === 'br' || side === 'bl' || side === 'bott');
+
             var rad = elW / 2;
             var cos45 = Math.cos(Math.PI / 4);
             var sin45 = Math.sin(Math.PI / 4);
-            var xr = midX + rad * cos45;
-            var yr = isBr ? (midY + rad * sin45) : (midY - rad * sin45);
+
+            var xr = isLeft ? (midX - rad * cos45) : (midX + rad * cos45);
+            var yr = isBottom ? (midY + rad * sin45) : (midY - rad * sin45);
 
             // Radius line from center to circle edge
             _addLine([midX, midY], [xr, yr]);
@@ -467,7 +530,13 @@ var IDMeasurement = (function () {
             // Arrow at circle edge pointing outwards
             var arrowTip = [xr, yr];
             var arrowBase1, arrowBase2;
-            if (isBr) {
+            if (isLeft && isBottom) {
+                arrowBase1 = [xr + arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
+                arrowBase2 = [xr + arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
+            } else if (isLeft && !isBottom) {
+                arrowBase1 = [xr + arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+                arrowBase2 = [xr + arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
+            } else if (!isLeft && isBottom) {
                 arrowBase1 = [xr - arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
                 arrowBase2 = [xr - arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
             } else {
@@ -476,36 +545,50 @@ var IDMeasurement = (function () {
             }
             _addArrow([arrowTip, arrowBase1, arrowBase2, arrowTip]);
 
-            // Leader lines
-            var kneeX = xr + stopTop * cos45;
-            var kneeY = isBr ? (yr + stopTop * sin45) : (yr - stopTop * sin45);
-            var endX = kneeX + stopTop;
+            // Leader lines & landing shelf
+            var kneeX = isLeft ? (xr - stopTop * cos45) : (xr + stopTop * cos45);
+            var kneeY = isBottom ? (yr + stopTop * sin45) : (yr - stopTop * sin45);
+            var endX = isLeft ? (kneeX - stopTop) : (kneeX + stopTop);
+            
             _addLine([xr, yr], [kneeX, kneeY]);
             _addLine([kneeX, kneeY], [endX, kneeY]);
 
             // Text label
             var radLabel = 'R ' + lablR + units;
-            var rTf = _addText(radLabel, endX + gap, kneeY, 0);
-            rTf.frame.geometricBounds = [kneeY - rTf.height / 2, endX + gap, kneeY + rTf.height / 2, endX + gap + rTf.width];
+            var rTf = _addText(radLabel, isLeft ? endX - gap : endX + gap, kneeY, 0);
+            if (isLeft) {
+                rTf.frame.geometricBounds = [kneeY - rTf.height / 2, endX - gap - rTf.width, kneeY + rTf.height / 2, endX - gap];
+            } else {
+                rTf.frame.geometricBounds = [kneeY - rTf.height / 2, endX + gap, kneeY + rTf.height / 2, endX + gap + rTf.width];
+            }
 
         } else if (measType === 'diam') {
             if (!isCircle(selElem)) {
                 return null;
             }
-            var isBr = (side === 'br' || side === 'bott');
+            var isLeft = (side === 'tl' || side === 'bl' || side === 'left');
+            var isBottom = (side === 'br' || side === 'bl' || side === 'bott');
+
             var radD = elW / 2;
             var cos45d = Math.cos(Math.PI / 4);
             var sin45d = Math.sin(Math.PI / 4);
-            var x1 = midX - radD * cos45d;
-            var y1 = isBr ? (midY - radD * sin45d) : (midY + radD * sin45d);
-            var x2 = midX + radD * cos45d;
-            var y2 = isBr ? (midY + radD * sin45d) : (midY - radD * sin45d);
+
+            var x1 = isLeft ? (midX + radD * cos45d) : (midX - radD * cos45d);
+            var y1 = isBottom ? (midY - radD * sin45d) : (midY + radD * sin45d);
+            var x2 = isLeft ? (midX - radD * cos45d) : (midX + radD * cos45d);
+            var y2 = isBottom ? (midY + radD * sin45d) : (midY - radD * sin45d);
 
             // Diameter line across circle
             _addLine([x1, y1], [x2, y2]);
 
             // Arrows at both ends
-            if (isBr) {
+            if (isLeft && isBottom) {
+                _addArrow([[x1, y1], [x1 - arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1 - arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1, y1]]);
+                _addArrow([[x2, y2], [x2 + arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2 + arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
+            } else if (isLeft && !isBottom) {
+                _addArrow([[x1, y1], [x1 - arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1 - arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1, y1]]);
+                _addArrow([[x2, y2], [x2 + arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2 + arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
+            } else if (!isLeft && isBottom) {
                 _addArrow([[x1, y1], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
                 _addArrow([[x2, y2], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
             } else {
@@ -513,17 +596,22 @@ var IDMeasurement = (function () {
                 _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
             }
 
-            // Leader line
-            var kneeXd = x2 + stopTop * cos45d;
-            var kneeYd = isBr ? (y2 + stopTop * sin45d) : (y2 - stopTop * sin45d);
-            var endXd = kneeXd + stopTop;
+            // Leader line & landing shelf
+            var kneeXd = isLeft ? (x2 - stopTop * cos45d) : (x2 + stopTop * cos45d);
+            var kneeYd = isBottom ? (y2 + stopTop * sin45d) : (y2 - stopTop * sin45d);
+            var endXd = isLeft ? (kneeXd - stopTop) : (kneeXd + stopTop);
+
             _addLine([x2, y2], [kneeXd, kneeYd]);
             _addLine([kneeXd, kneeYd], [endXd, kneeYd]);
 
             // Text label
             var diamLabel = '\u00d8 ' + lablW + units;
-            var dTf = _addText(diamLabel, endXd + gap, kneeYd, 0);
-            dTf.frame.geometricBounds = [kneeYd - dTf.height / 2, endXd + gap, kneeYd + dTf.height / 2, endXd + gap + dTf.width];
+            var dTf = _addText(diamLabel, isLeft ? endXd - gap : endXd + gap, kneeYd, 0);
+            if (isLeft) {
+                dTf.frame.geometricBounds = [kneeYd - dTf.height / 2, endXd - gap - dTf.width, kneeYd + dTf.height / 2, endXd - gap];
+            } else {
+                dTf.frame.geometricBounds = [kneeYd - dTf.height / 2, endXd + gap, kneeYd + dTf.height / 2, endXd + gap + dTf.width];
+            }
 
         } else if (measType === 'cent') {
             var N = 9, N_HOR = N, N_VER = N;
@@ -567,14 +655,17 @@ var IDMeasurement = (function () {
                 app.scriptPreferences.enableRedraw = false;
 
                 var res = [];
-                if (sel.length === 2 && u.ctrl === true) {
-                    if (sel[0].name && sel[0].name.match(/\d{7}/)) return "[]";
-                    if (sel[1].name && sel[1].name.match(/\d{7}/)) return "[]";
-                    var name2 = executeMeasure(doc, u, -1);
-                    if (name2) res.push(name2);
-                    return stringifyJSON(res);
+
+                // Dedicated Gap modes (gap_h, gap_v) or Ctrl+Click on 2 objects
+                if ((u.measType === 'gap_h' || u.measType === 'gap_v') || (sel.length === 2 && u.ctrl === true)) {
+                    if (sel.length >= 2) {
+                        var name2 = executeMeasure(doc, u, -1);
+                        if (name2) res.push(name2);
+                        return stringifyJSON(res);
+                    }
                 }
 
+                // Normal per-object measurement
                 for (var i = 0; i < sel.length; i++) {
                     if (sel[i].name && sel[i].name.match(/\d{7}/)) continue;
                     var nameSingle = executeMeasure(doc, u, i);
@@ -622,6 +713,31 @@ var IDMeasurement = (function () {
                 }
             } catch (e) {}
             return count;
+        },
+
+        getAllFonts: function () {
+            var lines = [];
+            try {
+                var fontCollection = app.fonts;
+                if (fontCollection) {
+                    var len = fontCollection.length;
+                    for (var i = 0; i < len; i++) {
+                        try {
+                            var f = fontCollection[i];
+                            var postscriptName = '';
+                            var familyName = '';
+                            var styleName = '';
+                            try { postscriptName = f.name || ''; } catch(e1) {}
+                            try { familyName = f.fontFamily || postscriptName; } catch(e2) { familyName = postscriptName; }
+                            try { styleName = f.fontStyleName || ''; } catch(e3) {}
+                            if (postscriptName) {
+                                lines.push(postscriptName + '@@' + familyName + '@@' + styleName);
+                            }
+                        } catch(eItem) {}
+                    }
+                }
+            } catch (eAll) {}
+            return lines.join('\n');
         }
     };
 })();
@@ -681,4 +797,8 @@ function delAllMeasurements() {
     } catch (e) {
         return IDMeasurement.deleteAll();
     }
+}
+
+function getAllInstalledFonts() {
+    return IDMeasurement.getAllFonts();
 }

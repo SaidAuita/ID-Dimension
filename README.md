@@ -1,4 +1,4 @@
-# ID Dimension v1.3
+# ID Dimension v1.4
 
 ![ID Dimension Interface](images/ID_Dimension.png)
 
@@ -18,8 +18,12 @@ This repository includes **two versions** of the tool in one package:
 ### Main Features and Capabilities
 * **Two UI options** — Choose between a modern dockable panel (CEP) or a lightweight floating ScriptUI palette (`.jsx`).
 * **Cross-platform** — Fully supports **Windows** and **macOS** (including Apple Silicon & macOS Sequoia).
+* **Searchable Font Picker (`font`)** — Fast font selection directly in the panel with instant search, caching, and recently used fonts.
+* **4-Direction Gap Measurement** — Dedicated buttons for measuring horizontal gap (Top / Bottom) and vertical gap (Left / Right) between two selected objects.
+* **4-Quadrant Radius & Diameter** — Measure circle radius (`R`) and diameter (`Ø`) in all 4 directions (Top-Left, Top-Right, Bottom-Left, Bottom-Right) with dedicated horizontal landing shelves.
 * **Drawing Scale support (`scale`)** — Support for scaled drawings (e.g. `1:10`, `1:50`, `1:100`, `2:1`, or a numeric multiplier like `10`). Perfect for architecture, large-format graphics, dielines, and exhibition stands where 75 mm represents 750 mm in reality.
 * **Measurement units** — Choose between mm, cm, in, pt, and px. The math automatically adapts to your workflow, and the selected unit can be displayed next to the number (the `unit` option).
+* **Drafting Standards Compliance** — Continuous dimension lines and proper formatting compliant with ГОСТ / ISO standards when dimensions are narrow.
 * **Color presets (CMYK)** — Set custom colors for dimension lines and text. Includes 6 customizable color swatch slots.
 * **Settings preservation** — Automatically remembers your settings across InDesign sessions (stored locally).
 * **3 preset slots (min / med / max)** — Quick switching between prepared dimension styles. Overwrite them by enabling `save` mode.
@@ -29,10 +33,10 @@ This repository includes **two versions** of the tool in one package:
 
 ### Dimensioning Tools
 * Dimensioning width (top / bottom) and height (left / right).
-* Dimensioning the gap between two selected objects (with `Ctrl` / `Cmd` key held, or by selecting 2 objects).
-* Measuring the radius and diameter of circles and circular frames in two directions: **Top-Right** and **Bottom-Right**.
+* 4 dedicated buttons for horizontal and vertical gap measurement between two selected objects.
+* Measuring the radius and diameter of circles in all 4 directions with landing shelves.
 * Marking the center of an object.
-* Customizable appearance: stroke weight, gap, indent, arrow size, font size, drawing scale, and precision (up to 3 decimal places).
+* Customizable appearance: stroke weight, gap, indent, arrow size, font family, font size, drawing scale, and precision (up to 3 decimal places).
 * Moving all dimensions to a designated separate layer (`layer` option).
 * Option to place dimensions outside the active page/spread boundary (`out page` / `out artboard` option).
 
@@ -59,10 +63,10 @@ Supports Adobe InDesign CC 2014 – 2026+ on Windows & macOS.
 #### Option B: Standalone Script (Floating Palette)
 No registry or terminal tweaks needed.
 
-* **Windows:** Copy `ID Dimension.jsx` into `%APPDATA%\Adobe\InDesign\Version <XX.X>\<Locale>\Scripts\Scripts Panel\`
-* **macOS:** Copy `ID Dimension.jsx` into `~/Library/Preferences/Adobe InDesign/Version <XX.X>/<Locale>/Scripts/Scripts Panel/`
-  *(Tip: in InDesign open `Window -> Utilities -> Scripts`, right-click on the "User" folder and select "Reveal in Finder" / "Reveal in Explorer").*
-* **Launch:** In the Scripts panel, double-click `ID Dimension.jsx` to open the palette.
+* **Windows:** Copy `ID Dimension.jsx` to `%APPDATA%\Adobe\InDesign\Version <XX.X>\<Locale>\Scripts\Scripts Panel\`
+* **macOS:** Copy `ID Dimension.jsx` to `~/Library/Preferences/Adobe InDesign/Version <XX.X>/<Locale>/Scripts/Scripts Panel/`
+  *(Tip: in InDesign open `Window -> Utilities -> Scripts`, right click "User" folder and select "Reveal in Finder" / "Reveal in Explorer").*
+* **Launch:** Double-click `ID Dimension.jsx` in the InDesign Scripts panel.
 
 ## 🛠️ Other Projects
 
@@ -86,21 +90,25 @@ No registry or terminal tweaks needed.
 ### Основные возможности
 * **Два варианта интерфейса** — выбирайте между современной закрепляемой панелью и легкой плавающей палитрой ScriptUI.
 * **Кроссплатформенность** — полная поддержка **Windows** и **macOS** (включая Apple Silicon и macOS Sequoia).
-* **Поддержка масштаба чертежа (`scale`)** — возможность задать масштаб макета (например, `1:10`, `1:50`, `1:100`, `2:1` или числовой множитель вроде `10`). Удобно при разработке наружной рекламы, стендов и крупногабаритной упаковки, где объект 75 мм в документе на выноске отображает реальные 750 мм.
+* **Поиск и выбор шрифта (`font`)** — быстрый поиск и выбор установленных гарнитур с умным фильтром и кэшированием.
+* **4 направления зазора между объектами** — отдельные кнопки для измерения точного расстояния между 2 объектами по горизонтали (сверху/снизу) и по вертикали (слева/справа).
+* **4 квадранта для радиуса и диаметра** — измерение радиуса (`R`) и диаметра (`Ø`) во все 4 стороны (вверх-влево, вверх-вправо, вниз-влево, вниз-вправо) с горизонтальной полочкой-площадкой.
+* **Поддержка масштаба чертежа (`scale`)** — возможность задать масштаб макета (например, `1:10`, `1:50`, `1:100`, `2:1` или числовой множитель вроде `10`). Удобно при разработке наружной рекламы, стендов и крупногабаритной упаковки.
 * **Единицы измерения** — поддержка выбора размерностей (mm, cm, in, pt, px). Математика скрипта автоматически адаптируется под ваш документ, а выбранную единицу измерения можно выводить рядом с числом (опция `unit`).
+* **Соответствие стандартам черчения** — непрерывная размерная линия при выносе текста наружу (по ГОСТ / ISO).
 * **Цветовые пресеты (CMYK)** — настройка цвета выносных линий и текста. Есть 6 ячеек для сохранения собственных цветов.
 * **Сохранение настроек** — панель автоматически запоминает все параметры между сессиями работы в InDesign.
-* **3 слота для пресетов (min / med / max)** — быстрое переключение между заготовленными стилями размеров. Для перезаписи включите галочку `save` и нажмите на нужный пресет.
+* **3 слота для пресетов (min / med / max)** — быстрое переключение между заготовленными стилями размеров.
 * **Единый шаг отмены (Undo)** — создание размера отменяется за одно нажатие `Ctrl+Z` / `Cmd+Z`.
 * **Удаление всех размеров (`clear`)** — быстрая очистка документа от всех созданных плагином выносок.
 * **Сброс до заводских настроек (`default`)** — возврат всех значений и цветов к состоянию по умолчанию.
 
 ### Функционал
 * Простановка ширины (сверху / снизу) и высоты (слева / справа).
-* Простановка размеров между двумя выбранными объектами (с зажатой клавишей `Ctrl` / `Cmd` или выбором 2 объектов).
-* Измерение радиуса и диаметра окружностей в двух направлениях: **вправо/вверх** и **вправо/вниз**.
+* 4 отдельные кнопки для простановки горизонтального и вертикального зазора между объектами.
+* Измерение радиуса и диаметра окружностей во всех 4 направлениях с полочкой-выноской.
 * Пометка центра объекта.
-* Гибкая настройка: толщина линии (stroke), отступ от объекта (gap), вынос линии (indent), размер стрелки (arrow), размер шрифта, масштаб (scale) и точность округления (до 3 знаков).
+* Гибкая настройка: толщина линии (stroke), отступ от объекта (gap), вынос линии (indent), размер стрелки (arrow), выбор шрифта (font), размер шрифта, масштаб (scale) и точность округления (до 3 знаков).
 * Вынос всех размеров на отдельный слой (опция `layer`).
 * Возможность выносить размеры за пределы страницы / разворота (опция `out page`).
 

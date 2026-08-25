@@ -18,7 +18,7 @@ body {
     padding: 6px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 /* Measurements Layout */
@@ -27,26 +27,37 @@ body {
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 15px; /* space between diam, cross, and rad */
+    gap: 8px;
+}
+
+.quad-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.quad-row {
+    display: flex;
+    gap: 3px;
 }
 
 .col-buttons {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
 }
 
-.cross-layout {
+.cross-layout, .dir-arrows {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 2px;
 }
 
-.cross-middle {
+.cross-middle, .horizontal-arrows {
     display: flex;
-    gap: 4px;
+    gap: 3px;
 }
 
 /* Hide number input spinners */
@@ -60,8 +71,8 @@ input[type=number] {
 }
 
 .icon-btn {
-    width: 26px;
-    height: 26px;
+    width: 25px;
+    height: 25px;
     padding: 0;
 }
 
@@ -69,7 +80,7 @@ input[type=number] {
 .settings-block {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
 }
 
 .row {
@@ -100,9 +111,8 @@ input[type=number] {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(128, 128, 128, 0.4);
     color: inherit;
-    padding: 2px 4px;
     border-radius: 2px;
-    font-family: inherit;
+    padding: 2px 4px;
     font-size: 11px;
     outline: none;
     height: 20px;
@@ -113,6 +123,13 @@ input[type=number] {
 
 .num-input {
     width: 45px;
+    flex: 1;
+}
+
+.select-input {
+    width: 45px;
+    flex: 1;
+    cursor: pointer;
 }
 
 .text-input {
@@ -120,22 +137,100 @@ input[type=number] {
     min-width: 0;
 }
 
-.select-input {
-    width: 55px;
-    padding: 0;
+.cmyk-input {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
 }
 
-.cmyk-input {
-    width: 35px; /* Slightly wider so 100 fits comfortably */
+/* Searchable Font Picker */
+.font-row {
+    position: relative;
+}
+
+.font-picker-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.font-input {
+    width: 100%;
+    cursor: pointer;
+}
+
+.font-dropdown {
+    display: none;
+    position: absolute;
+    top: 22px;
+    left: 0;
+    right: 0;
+    max-height: 180px;
+    overflow-y: auto;
+    background: #252525;
+    border: 1px solid #444;
+    border-radius: 3px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    z-index: 9999;
+}
+
+.font-dropdown.open {
+    display: block;
+}
+
+.font-group-header {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #888;
+    padding: 4px 6px 2px 6px;
+    background: rgba(0,0,0,0.25);
+}
+
+.font-item {
+    padding: 4px 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.font-item:hover, .font-item.active {
+    background: #2680eb;
+    color: #fff;
+}
+
+.font-item.selected {
+    font-weight: bold;
+    color: #ffa98a;
+}
+
+.font-item.selected:hover, .font-item.selected.active {
+    color: #fff;
+}
+
+.font-item-sample {
+    font-size: 9px;
+    opacity: 0.6;
+    margin-left: 4px;
+}
+
+.font-no-results {
+    padding: 8px;
+    text-align: center;
+    color: #888;
+    font-style: italic;
 }
 
 /* Buttons */
 .hostButton {
+    background: rgba(128, 128, 128, 0.15);
     border: 1px solid rgba(128, 128, 128, 0.4);
-    background: rgba(128, 128, 128, 0.1);
     color: inherit;
-    cursor: pointer;
     border-radius: 2px;
+    cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -147,11 +242,6 @@ input[type=number] {
 }
 .hostButton:active {
     background: rgba(0, 0, 0, 0.3);
-}
-
-/* The measurement cross and icon buttons are slightly larger */
-.icon-btn {
-    height: 26px;
 }
 
 .hostButton svg {

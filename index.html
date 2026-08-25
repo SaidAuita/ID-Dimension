@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <link id="hostStyle" rel="stylesheet" href="css/styles.css"/>
-    <title>ID Dimension v1.3</title>
+    <title>ID Dimension v1.4</title>
 </head>
 <body class="hostElt">
 
@@ -11,15 +11,35 @@
 
     <!-- MEASUREMENT BUTTONS -->
     <div class="measurements-block">
-        <div class="col-buttons">
-            <button id="btn_diam" class="hostButton icon-btn" title="Diameter (Top-Right)">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M6 18l12-12"/></svg>
-            </button>
-            <button id="btn_diam_br" class="hostButton icon-btn" title="Diameter (Bottom-Right)">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M6 6l12 12"/></svg>
-            </button>
+        <!-- LEFT: GAP HORIZONTAL (TOP/BOTT) & DIAMETER (4 QUADRANTS) -->
+        <div class="quad-grid">
+            <div class="quad-row">
+                <button id="btn_gap_top" class="hostButton icon-btn" title="Gap Horizontal (Top)">
+                    <svg viewBox="0 0 24 24"><path d="M4 6v12M20 6v12M4 12h16M7 9l-3 3 3 3M17 9l3 3-3 3"/></svg>
+                </button>
+                <button id="btn_gap_bott" class="hostButton icon-btn" title="Gap Horizontal (Bottom)">
+                    <svg viewBox="0 0 24 24"><path d="M4 6v12M20 6v12M4 12h16M7 9l-3 3 3 3M17 9l3 3-3 3"/></svg>
+                </button>
+            </div>
+            <div class="quad-row">
+                <button id="btn_diam_tl" class="hostButton icon-btn" title="Diameter (Top-Left)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor"/><path d="M17 17L7 7M7 7H3"/></svg>
+                </button>
+                <button id="btn_diam" class="hostButton icon-btn" title="Diameter (Top-Right)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor"/><path d="M7 17L17 7M17 7h4"/></svg>
+                </button>
+            </div>
+            <div class="quad-row">
+                <button id="btn_diam_bl" class="hostButton icon-btn" title="Diameter (Bottom-Left)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor"/><path d="M17 7L7 17M7 17H3"/></svg>
+                </button>
+                <button id="btn_diam_br" class="hostButton icon-btn" title="Diameter (Bottom-Right)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor"/><path d="M7 7l10 10M17 17h4"/></svg>
+                </button>
+            </div>
         </div>
 
+        <!-- CENTER: STANDARD CROSS -->
         <div class="cross-layout">
             <button id="btn_top" class="hostButton icon-btn" title="Top Dimension (Ctrl for 2 objects)">
                 <svg viewBox="0 0 24 24"><path d="M12 4v16m-4-12l4-4 4 4"/></svg>
@@ -40,13 +60,32 @@
             </button>
         </div>
         
-        <div class="col-buttons">
-            <button id="btn_rad" class="hostButton icon-btn" title="Radius (Top-Right)">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M12 12l6-6"/></svg>
-            </button>
-            <button id="btn_rad_br" class="hostButton icon-btn" title="Radius (Bottom-Right)">
-                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor"/><path d="M12 12l6 6"/></svg>
-            </button>
+        <!-- RIGHT: GAP VERTICAL (LEFT/RIGHT) & RADIUS (4 QUADRANTS) -->
+        <div class="quad-grid">
+            <div class="quad-row">
+                <button id="btn_gap_left" class="hostButton icon-btn" title="Gap Vertical (Left)">
+                    <svg viewBox="0 0 24 24"><path d="M6 4h12M6 20h12M12 4v16M9 7l3-3 3 3M9 17l3 3 3 3"/></svg>
+                </button>
+                <button id="btn_gap_right" class="hostButton icon-btn" title="Gap Vertical (Right)">
+                    <svg viewBox="0 0 24 24"><path d="M6 4h12M6 20h12M12 4v16M9 7l3-3 3 3M9 17l3 3 3 3"/></svg>
+                </button>
+            </div>
+            <div class="quad-row">
+                <button id="btn_rad_tl" class="hostButton icon-btn" title="Radius (Top-Left)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor"/><path d="M12 12L7 7M7 7H3"/></svg>
+                </button>
+                <button id="btn_rad" class="hostButton icon-btn" title="Radius (Top-Right)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor"/><path d="M12 12l5-5M17 7h4"/></svg>
+                </button>
+            </div>
+            <div class="quad-row">
+                <button id="btn_rad_bl" class="hostButton icon-btn" title="Radius (Bottom-Left)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor"/><path d="M12 12L7 17M7 17H3"/></svg>
+                </button>
+                <button id="btn_rad_br" class="hostButton icon-btn" title="Radius (Bottom-Right)">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="none" stroke="currentColor"/><path d="M12 12l5 5M17 17h4"/></svg>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -85,6 +124,17 @@
             <input type="number" id="line_indent" class="hostInput num-input" step="0.5" value="1.0"/>
             <label class="prop-label">arrow:</label>
             <input type="number" id="arrow_width" class="hostInput num-input" step="0.5" value="3.5"/>
+        </div>
+
+        <div class="row font-row">
+            <label class="prop-label">font:</label>
+            <div class="font-picker-wrapper">
+                <input type="text" id="font_search_input" class="hostInput font-input" placeholder="Search font..." autocomplete="off" spellcheck="false" value="Default (Minion Pro / System)"/>
+                <input type="hidden" id="font_name" value="default"/>
+                <div class="font-dropdown" id="font_dropdown">
+                    <div class="font-list" id="font_list"></div>
+                </div>
+            </div>
         </div>
 
         <div class="row">
@@ -154,6 +204,7 @@
 <script src="js/themeManager.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/colors.js"></script>
+<script src="js/fontPicker.js"></script>
 <script src="js/presets.js"></script>
 <script src="js/measurements.js"></script>
 <script src="js/ui.js"></script>

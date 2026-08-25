@@ -47,6 +47,8 @@ const Measurements = (function() {
         const outArtboardEl = document.getElementById('out_artboard');
         const outArtboard = outArtboardEl ? outArtboardEl.checked : false;
 
+        const fontName = (typeof FontPicker !== 'undefined') ? FontPicker.getSelectedFontName() : 'default';
+
         const opts = {
             measType: params.type,
             side: params.side || '',
@@ -64,7 +66,7 @@ const Measurements = (function() {
             scale: scaleVal,
             addLay: addLay,
             layName: layName,
-            fontNum: 0,
+            fontName: fontName,
             outArtboard: outArtboard
         };
 
@@ -99,7 +101,7 @@ const Measurements = (function() {
     }
 
     return {
-        runMeasurement: (p) => runMeasurement(p, false),
+        runMeasurement,
         reRunMeasurement,
         deleteAllMeasurements
     };

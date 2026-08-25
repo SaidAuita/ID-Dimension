@@ -1,5 +1,5 @@
 /**
- * ID Dimension v1.3 - Standalone ScriptUI Palette for Adobe InDesign
+ * ID Dimension v1.4 - Standalone ScriptUI Palette for Adobe InDesign
  * 
  * Install (Windows): %APPDATA%\Adobe\InDesign\Version <XX.X>\<Locale>\Scripts\Scripts Panel\
  * Install (macOS): ~/Library/Preferences/Adobe InDesign/Version <XX.X>/<Locale>/Scripts/Scripts Panel/
@@ -30,15 +30,15 @@
     var DEFAULT_PRESETS = {
         min: {
             add_mm: false, unit_select: 0, line_len: 5, precis: 0, line_stroke: 0.1, gap: 0.5, line_indent: 0.5, arrow_width: 2,
-            font_size: 8, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
+            font_name: 'default', font_size: 8, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
         },
         med: {
             add_mm: false, unit_select: 0, line_len: 10, precis: 2, line_stroke: 0.2, gap: 1, line_indent: 1, arrow_width: 3.5,
-            font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
+            font_name: 'default', font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
         },
         max: {
             add_mm: false, unit_select: 0, line_len: 20, precis: 3, line_stroke: 0.5, gap: 2, line_indent: 2, arrow_width: 5,
-            font_size: 24, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
+            font_name: 'default', font_size: 24, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
         }
     };
 
@@ -52,6 +52,29 @@
     ];
 
     var UNITS_LIST = ['mm', 'cm', 'in', 'pt', 'px'];
+
+    var POPULAR_FONTS = [
+        { label: "Default (Minion Pro / System)", name: "default" },
+        { label: "Minion Pro Regular", name: "MinionPro-Regular" },
+        { label: "Minion Pro Bold", name: "MinionPro-Bold" },
+        { label: "Myriad Pro Regular", name: "MyriadPro-Regular" },
+        { label: "Myriad Pro Bold Cond", name: "MyriadPro-BoldCond" },
+        { label: "Arial Regular", name: "ArialMT" },
+        { label: "Arial Bold", name: "Arial-BoldMT" },
+        { label: "Helvetica Regular", name: "Helvetica" },
+        { label: "Helvetica Bold", name: "Helvetica-Bold" },
+        { label: "Calibri Regular", name: "Calibri" },
+        { label: "Calibri Bold", name: "Calibri-Bold" },
+        { label: "Roboto Regular", name: "Roboto-Regular" },
+        { label: "Roboto Bold", name: "Roboto-Bold" },
+        { label: "Segoe UI Regular", name: "SegoeUI" },
+        { label: "Segoe UI Bold", name: "SegoeUI-Bold" },
+        { label: "Futura Bold", name: "Futura-Bold" },
+        { label: "Times New Roman Bold", name: "TimesNewRomanPS-BoldMT" },
+        { label: "Trebuchet MS", name: "TrebuchetMS" },
+        { label: "Verdana", name: "Verdana" },
+        { label: "Consolas", name: "Consolas" }
+    ];
 
     function parseScale(val) {
         if (typeof val === 'number') return (val > 0) ? val : 1;
@@ -70,6 +93,13 @@
             return num;
         }
         return 1;
+    }
+
+    function formatNumber(num, dec) {
+        if (isNaN(num) || !isFinite(num)) return "0";
+        var d = parseInt(dec, 10);
+        if (isNaN(d) || d < 0) d = 0;
+        return Number(num.toFixed(d)).toFixed(d);
     }
 
     // --- JSON parser/stringifier for ExtendScript ES3 ---
@@ -137,6 +167,9 @@
 
     // --- Core Measurement Engine for InDesign ---
     var Engine = {
+        PT_TO_MM: 2.834645668,
+        MM_TO_PT: 0.352777778,
+
         makeRandStr: function (len) {
             return ('1' + (new Date().getTime()) + Math.floor(Math.random() * 10000)).slice(0, len);
         },
@@ -164,9 +197,7 @@
             
             try {
                 var existing = doc.colors.itemByName(colorName);
-                if (existing.isValid) {
-                    return existing;
-                }
+                if (existing.isValid) return existing;
             } catch (e1) {}
 
             try {
@@ -200,6 +231,25 @@
             return lay;
         },
 
+        applyFontToTextFrame: function (tf, fontParam) {
+            if (!tf || !fontParam || fontParam === 'default' || fontParam === '') return;
+            try {
+                tf.paragraphs[0].appliedFont = app.fonts.itemByName(fontParam);
+                return;
+            } catch (e1) {}
+            try {
+                var allF = app.fonts;
+                var len = allF.length;
+                for (var f = 0; f < len; f++) {
+                    var fnt = allF[f];
+                    if (fnt.name === fontParam || fnt.fontFamily === fontParam || fnt.postscriptName === fontParam) {
+                        tf.paragraphs[0].appliedFont = fnt;
+                        return;
+                    }
+                }
+            } catch (e2) {}
+        },
+
         isCircle: function (elem) {
             try {
                 if (!elem || elem.constructor.name === "Group") return false;
@@ -215,42 +265,62 @@
         },
 
         getRectByHorizGap: function (sel) {
-            var b1 = sel[0].geometricBounds;
+            if (!sel || sel.length < 2) return null;
+            var b1 = sel[0].geometricBounds; // [top, left, bott, right]
             var b2 = sel[1].geometricBounds;
-            var left, right, top, bott;
+            if (!b1 || !b2) return null;
 
-            if (b1[3] <= b2[1]) {
-                left = b1[3];
-                right = b2[1];
-            } else if (b2[3] <= b1[1]) {
-                left = b2[3];
-                right = b1[1];
-            } else {
-                return false;
+            var leftObj = (b1[1] <= b2[1]) ? b1 : b2;
+            var rightObj = (b1[1] <= b2[1]) ? b2 : b1;
+
+            var left = leftObj[3];   // right edge of leftmost object
+            var right = rightObj[1];  // left edge of rightmost object
+
+            if (right <= left) {
+                left = Math.min(leftObj[3], rightObj[1]);
+                right = Math.max(leftObj[3], rightObj[1]);
+                if (right === left) right = left + 1;
             }
 
-            top = Math.min(b1[0], b2[0]);
-            bott = Math.max(b1[2], b2[2]);
+            var top = Math.min(b1[0], b2[0]);
+            var bott = Math.max(b1[2], b2[2]);
+            var overlapTop = Math.max(b1[0], b2[0]);
+            var overlapBot = Math.min(b1[2], b2[2]);
+            if (overlapBot > overlapTop) {
+                top = overlapTop;
+                bott = overlapBot;
+            }
+
             return [top, left, bott, right];
         },
 
         getRectByVertGap: function (sel) {
-            var b1 = sel[0].geometricBounds;
+            if (!sel || sel.length < 2) return null;
+            var b1 = sel[0].geometricBounds; // [top, left, bott, right]
             var b2 = sel[1].geometricBounds;
-            var left, right, top, bott;
+            if (!b1 || !b2) return null;
 
-            if (b1[2] <= b2[0]) {
-                top = b1[2];
-                bott = b2[0];
-            } else if (b2[2] <= b1[0]) {
-                top = b2[2];
-                bott = b1[0];
-            } else {
-                return false;
+            var topObj = (b1[0] <= b2[0]) ? b1 : b2;
+            var botObj = (b1[0] <= b2[0]) ? b2 : b1;
+
+            var top = topObj[2];    // bottom edge of upper object
+            var bott = botObj[0];   // top edge of lower object
+
+            if (bott <= top) {
+                top = Math.min(topObj[2], botObj[0]);
+                bott = Math.max(topObj[2], botObj[0]);
+                if (bott === top) bott = top + 1;
             }
 
-            left = Math.min(b1[1], b2[1]);
-            right = Math.max(b1[3], b2[3]);
+            var left = Math.min(b1[1], b2[1]);
+            var right = Math.max(b1[3], b2[3]);
+            var overlapLeft = Math.max(b1[1], b2[1]);
+            var overlapRight = Math.min(b1[3], b2[3]);
+            if (overlapRight > overlapLeft) {
+                left = overlapLeft;
+                right = overlapRight;
+            }
+
             return [top, left, bott, right];
         },
 
@@ -268,6 +338,7 @@
             var addLay = u.addLay;
             var layName = u.layName;
             var outArtboard = u.outArtboard;
+            var fontName = u.fontName || 'default';
 
             var arH = arW / 1.9;
             var col = this.getOrCreateCmykColor(doc, u.colComp);
@@ -276,13 +347,16 @@
             var sel = doc.selection || app.selection;
             var selElem = (iterator !== -1) ? sel[iterator] : sel[0];
             
+            // Find target container (Page or Spread)
             var targetParent = selElem.parent;
             while (targetParent && targetParent.constructor.name !== "Spread" && 
                    targetParent.constructor.name !== "Page" && 
                    targetParent.constructor.name !== "MasterSpread") {
                 targetParent = targetParent.parent;
             }
-            if (!targetParent) targetParent = app.activeWindow.activeSpread;
+            if (!targetParent) {
+                targetParent = app.activeWindow.activeSpread;
+            }
 
             var defLayer = (selElem.itemLayer && selElem.itemLayer.isValid) ? selElem.itemLayer : doc.activeLayer;
             var lay = this.getOrCreateLayer(doc, layName, addLay, defLayer);
@@ -290,25 +364,25 @@
             var bounds, left, right, top, bott, elW, elH, rect;
 
             if (iterator !== -1) {
-                bounds = selElem.geometricBounds;
+                bounds = selElem.geometricBounds; // InDesign: [top, left, bott, right]
                 top = bounds[0];
                 left = bounds[1];
                 bott = bounds[2];
                 right = bounds[3];
                 elW = right - left;
                 elH = bott - top;
-            } else if (measType === 'linear') {
-                switch (side) {
-                    case 'top':
-                    case 'bott':
-                        rect = this.getRectByHorizGap(sel);
-                        break;
-                    case 'left':
-                    case 'right':
-                        rect = this.getRectByVertGap(sel);
-                        break;
-                }
-                if (rect === false) return null;
+            } else if (measType === 'gap_h' || (measType === 'linear' && (side === 'top' || side === 'bott'))) {
+                rect = this.getRectByHorizGap(sel);
+                if (!rect) return null;
+                top = rect[0];
+                left = rect[1];
+                bott = rect[2];
+                right = rect[3];
+                elW = right - left;
+                elH = bott - top;
+            } else if (measType === 'gap_v' || (measType === 'linear' && (side === 'left' || side === 'right'))) {
+                rect = this.getRectByVertGap(sel);
+                if (!rect) return null;
                 top = rect[0];
                 left = rect[1];
                 bott = rect[2];
@@ -317,10 +391,14 @@
                 elH = bott - top;
             }
 
-            if (outArtboard && measType === 'linear') {
+            if (isNaN(elW) || !isFinite(elW) || elW <= 0) elW = 0.001;
+            if (isNaN(elH) || !isFinite(elH) || elH <= 0) elH = 0.001;
+
+            // Out Page positioning
+            if (outArtboard && (measType === 'linear' || measType === 'gap_h' || measType === 'gap_v')) {
                 var targetPage = selElem.parentPage || app.activeWindow.activePage;
                 if (targetPage && targetPage.isValid) {
-                    var pb = targetPage.bounds;
+                    var pb = targetPage.bounds; // [top, left, bott, right]
                     switch (side) {
                         case 'top': top = pb[0]; break;
                         case 'bott': bott = pb[2]; break;
@@ -330,22 +408,28 @@
                 }
             }
 
-            var PT_TO_MM = 2.834645668;
-            var p = Math.pow(10, precis);
             var unitType = u.unitType || 'mm';
-            var unitScale = 2.834645668;
+            var unitScale = 2.834645668; // mm in pt
             if (unitType === 'cm') unitScale = 28.34645668;
             else if (unitType === 'in') unitScale = 72.0;
             else if (unitType === 'pt' || unitType === 'px') unitScale = 1.0;
+            
             var scaleVal = (u.scale !== undefined) ? parseScale(u.scale) : 1;
 
-            var lablW = Math.round((elW * scaleVal) / (unitScale / p)) / p;
-            var lablH = Math.round((elH * scaleVal) / (unitScale / p)) / p;
-            var lablR = Math.round(((elW * scaleVal) / 2) / (unitScale / p)) / p;
+            var valW = (elW * scaleVal) / unitScale;
+            var valH = (elH * scaleVal) / unitScale;
+            var valR = ((elW * scaleVal) / 2) / unitScale;
 
-            var ext = Math.max(stopBot, 2.0 * PT_TO_MM);
+            var lablW = formatNumber(valW, precis);
+            var lablH = formatNumber(valH, precis);
+            var lablR = formatNumber(valR, precis);
+
+            // Extension past dimension line for witness lines (1.5 - 2 mm)
+            var ext = Math.max(stopBot, 2.0 * this.PT_TO_MM);
             var createdItems = [];
+            var self = this;
 
+            // --- Drawing subroutines ---
             function _addLine(p1, p2) {
                 var line = targetParent.graphicLines.add();
                 if (lay && lay.isValid) line.itemLayer = lay;
@@ -388,6 +472,8 @@
                 pr.pointSize = fontSize;
                 if (col) pr.fillColor = col;
 
+                self.applyFontToTextFrame(tf, fontName);
+
                 try {
                     tf.fit(FitOptions.FRAME_TO_CONTENT);
                 } catch (e) {}
@@ -400,6 +486,7 @@
                     tf.rotationAngle = rotAngle;
                 }
 
+                // Center at (cx, cy)
                 if (rotAngle === 90 || rotAngle === -90 || rotAngle === 270) {
                     tf.geometricBounds = [cy - origW / 2, cx - origH / 2, cy + origW / 2, cx + origH / 2];
                 } else {
@@ -414,13 +501,18 @@
                 };
             }
 
+            // --- Execution Branches ---
             var midX = left + elW / 2;
             var midY = top + elH / 2;
 
-            if (measType === 'linear') {
+            if (measType === 'linear' || measType === 'gap_h' || measType === 'gap_v') {
+                var activeSide = side;
+                if (measType === 'gap_h' && !activeSide) activeSide = 'top';
+                if (measType === 'gap_v' && !activeSide) activeSide = 'left';
+
                 var labelText, tfInfo, yPos, xPos, tw, th;
 
-                if (side === 'top') {
+                if (activeSide === 'top') {
                     labelText = lablW + units;
                     yPos = top - stopTop;
                     
@@ -437,19 +529,15 @@
                         _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
                         _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
                     } else {
-                        // Outside layout: continuous line between witness lines!
                         _addLine([left, yPos], [right, yPos]);
-                        // Left extension & arrow
                         _addLine([left, yPos], [left - arW * 2, yPos]);
                         _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
-                        // Right extension & arrow
                         _addLine([right, yPos], [right + arW * 2, yPos]);
                         _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
-                        // Text to the right
                         tfInfo.frame.geometricBounds = [yPos - th / 2, right + arW * 2 + gap, yPos + th / 2, right + arW * 2 + gap + tw];
                     }
 
-                } else if (side === 'bott') {
+                } else if (activeSide === 'bott') {
                     labelText = lablW + units;
                     yPos = bott + stopTop;
 
@@ -466,91 +554,90 @@
                         _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
                         _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
                     } else {
-                        // Outside layout: continuous line between witness lines!
                         _addLine([left, yPos], [right, yPos]);
-                        // Left extension & arrow
                         _addLine([left, yPos], [left - arW * 2, yPos]);
                         _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
-                        // Right extension & arrow
                         _addLine([right, yPos], [right + arW * 2, yPos]);
                         _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
-                        // Text to the right
                         tfInfo.frame.geometricBounds = [yPos - th / 2, right + arW * 2 + gap, yPos + th / 2, right + arW * 2 + gap + tw];
                     }
 
-                } else if (side === 'left') {
+                } else if (activeSide === 'left') {
                     labelText = lablH + units;
                     xPos = left - stopTop;
+
+                    tfInfo = _addText(labelText, xPos, midY, -90);
+                    tw = tfInfo.width;
+                    th = tfInfo.height;
 
                     _addLine([left - stopBot, top], [xPos - ext, top]);
                     _addLine([left - stopBot, bott], [xPos - ext, bott]);
 
-                    tfInfo = _addText(labelText, xPos, midY, 90);
-                    tw = tfInfo.width;
-                    th = tfInfo.height;
-
-                    if (tw < (elH - gap * 2 - arW * 3)) {
-                        _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
-                        _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
+                    if (th < (elH - gap * 2 - arW * 3)) {
+                        _addLine([xPos, top], [xPos, midY - th / 2 - gap]);
+                        _addLine([xPos, midY + th / 2 + gap], [xPos, bott]);
                         _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
                         _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
                     } else {
-                        // Outside layout: continuous vertical line between witness lines!
                         _addLine([xPos, top], [xPos, bott]);
-                        // Top extension & arrow
                         _addLine([xPos, top], [xPos, top - arW * 2]);
                         _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
-                        // Bottom extension & arrow
                         _addLine([xPos, bott], [xPos, bott + arW * 2]);
                         _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
-                        // Text below bottom
                         tfInfo.frame.geometricBounds = [bott + arW * 2 + gap, xPos - th / 2, bott + arW * 2 + gap + tw, xPos + th / 2];
                     }
 
-                } else if (side === 'right') {
+                } else if (activeSide === 'right') {
                     labelText = lablH + units;
                     xPos = right + stopTop;
+
+                    tfInfo = _addText(labelText, xPos, midY, -90);
+                    tw = tfInfo.width;
+                    th = tfInfo.height;
 
                     _addLine([right + stopBot, top], [xPos + ext, top]);
                     _addLine([right + stopBot, bott], [xPos + ext, bott]);
 
-                    tfInfo = _addText(labelText, xPos, midY, 90);
-                    tw = tfInfo.width;
-                    th = tfInfo.height;
-
-                    if (tw < (elH - gap * 2 - arW * 3)) {
-                        _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
-                        _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
+                    if (th < (elH - gap * 2 - arW * 3)) {
+                        _addLine([xPos, top], [xPos, midY - th / 2 - gap]);
+                        _addLine([xPos, midY + th / 2 + gap], [xPos, bott]);
                         _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
                         _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
                     } else {
-                        // Outside layout: continuous vertical line between witness lines!
                         _addLine([xPos, top], [xPos, bott]);
-                        // Top extension & arrow
                         _addLine([xPos, top], [xPos, top - arW * 2]);
                         _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
-                        // Bottom extension & arrow
                         _addLine([xPos, bott], [xPos, bott + arW * 2]);
                         _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
-                        // Text below bottom
                         tfInfo.frame.geometricBounds = [bott + arW * 2 + gap, xPos - th / 2, bott + arW * 2 + gap + tw, xPos + th / 2];
                     }
                 }
 
             } else if (measType === 'rad') {
-                if (!this.isCircle(selElem)) return null;
-                var isBr = (side === 'br' || side === 'bott');
+                if (!this.isCircle(selElem)) {
+                    return null;
+                }
+                var isLeft = (side === 'tl' || side === 'bl' || side === 'left');
+                var isBottom = (side === 'br' || side === 'bl' || side === 'bott');
+
                 var rad = elW / 2;
                 var cos45 = Math.cos(Math.PI / 4);
                 var sin45 = Math.sin(Math.PI / 4);
-                var xr = midX + rad * cos45;
-                var yr = isBr ? (midY + rad * sin45) : (midY - rad * sin45);
+
+                var xr = isLeft ? (midX - rad * cos45) : (midX + rad * cos45);
+                var yr = isBottom ? (midY + rad * sin45) : (midY - rad * sin45);
 
                 _addLine([midX, midY], [xr, yr]);
 
                 var arrowTip = [xr, yr];
                 var arrowBase1, arrowBase2;
-                if (isBr) {
+                if (isLeft && isBottom) {
+                    arrowBase1 = [xr + arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
+                    arrowBase2 = [xr + arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
+                } else if (isLeft && !isBottom) {
+                    arrowBase1 = [xr + arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+                    arrowBase2 = [xr + arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
+                } else if (!isLeft && isBottom) {
                     arrowBase1 = [xr - arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
                     arrowBase2 = [xr - arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
                 } else {
@@ -559,30 +646,46 @@
                 }
                 _addArrow([arrowTip, arrowBase1, arrowBase2, arrowTip]);
 
-                var kneeX = xr + stopTop * cos45;
-                var kneeY = isBr ? (yr + stopTop * sin45) : (yr - stopTop * sin45);
-                var endX = kneeX + stopTop;
+                var kneeX = isLeft ? (xr - stopTop * cos45) : (xr + stopTop * cos45);
+                var kneeY = isBottom ? (yr + stopTop * sin45) : (yr - stopTop * sin45);
+                var endX = isLeft ? (kneeX - stopTop) : (kneeX + stopTop);
+                
                 _addLine([xr, yr], [kneeX, kneeY]);
                 _addLine([kneeX, kneeY], [endX, kneeY]);
 
                 var radLabel = 'R ' + lablR + units;
-                var rTf = _addText(radLabel, endX + gap, kneeY, 0);
-                rTf.frame.geometricBounds = [kneeY - rTf.height / 2, endX + gap, kneeY + rTf.height / 2, endX + gap + rTf.width];
+                var rTf = _addText(radLabel, isLeft ? endX - gap : endX + gap, kneeY, 0);
+                if (isLeft) {
+                    rTf.frame.geometricBounds = [kneeY - rTf.height / 2, endX - gap - rTf.width, kneeY + rTf.height / 2, endX - gap];
+                } else {
+                    rTf.frame.geometricBounds = [kneeY - rTf.height / 2, endX + gap, kneeY + rTf.height / 2, endX + gap + rTf.width];
+                }
 
             } else if (measType === 'diam') {
-                if (!this.isCircle(selElem)) return null;
-                var isBr = (side === 'br' || side === 'bott');
+                if (!this.isCircle(selElem)) {
+                    return null;
+                }
+                var isLeft = (side === 'tl' || side === 'bl' || side === 'left');
+                var isBottom = (side === 'br' || side === 'bl' || side === 'bott');
+
                 var radD = elW / 2;
                 var cos45d = Math.cos(Math.PI / 4);
                 var sin45d = Math.sin(Math.PI / 4);
-                var x1 = midX - radD * cos45d;
-                var y1 = isBr ? (midY - radD * sin45d) : (midY + radD * sin45d);
-                var x2 = midX + radD * cos45d;
-                var y2 = isBr ? (midY + radD * sin45d) : (midY - radD * sin45d);
+
+                var x1 = isLeft ? (midX + radD * cos45d) : (midX - radD * cos45d);
+                var y1 = isBottom ? (midY - radD * sin45d) : (midY + radD * sin45d);
+                var x2 = isLeft ? (midX - radD * cos45d) : (midX + radD * cos45d);
+                var y2 = isBottom ? (midY + radD * sin45d) : (midY - radD * sin45d);
 
                 _addLine([x1, y1], [x2, y2]);
 
-                if (isBr) {
+                if (isLeft && isBottom) {
+                    _addArrow([[x1, y1], [x1 - arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1 - arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1, y1]]);
+                    _addArrow([[x2, y2], [x2 + arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2 + arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
+                } else if (isLeft && !isBottom) {
+                    _addArrow([[x1, y1], [x1 - arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1 - arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1, y1]]);
+                    _addArrow([[x2, y2], [x2 + arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2 + arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
+                } else if (!isLeft && isBottom) {
                     _addArrow([[x1, y1], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
                     _addArrow([[x2, y2], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
                 } else {
@@ -590,15 +693,20 @@
                     _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
                 }
 
-                var kneeXd = x2 + stopTop * cos45d;
-                var kneeYd = isBr ? (y2 + stopTop * sin45d) : (y2 - stopTop * sin45d);
-                var endXd = kneeXd + stopTop;
+                var kneeXd = isLeft ? (x2 - stopTop * cos45d) : (x2 + stopTop * cos45d);
+                var kneeYd = isBottom ? (y2 + stopTop * sin45d) : (y2 - stopTop * sin45d);
+                var endXd = isLeft ? (kneeXd - stopTop) : (kneeXd + stopTop);
+
                 _addLine([x2, y2], [kneeXd, kneeYd]);
                 _addLine([kneeXd, kneeYd], [endXd, kneeYd]);
 
                 var diamLabel = '\u00d8 ' + lablW + units;
-                var dTf = _addText(diamLabel, endXd + gap, kneeYd, 0);
-                dTf.frame.geometricBounds = [kneeYd - dTf.height / 2, endXd + gap, kneeYd + dTf.height / 2, endXd + gap + dTf.width];
+                var dTf = _addText(diamLabel, isLeft ? endXd - gap : endXd + gap, kneeYd, 0);
+                if (isLeft) {
+                    dTf.frame.geometricBounds = [kneeYd - dTf.height / 2, endXd - gap - dTf.width, kneeYd + dTf.height / 2, endXd - gap];
+                } else {
+                    dTf.frame.geometricBounds = [kneeYd - dTf.height / 2, endXd + gap, kneeYd + dTf.height / 2, endXd + gap + dTf.width];
+                }
 
             } else if (measType === 'cent') {
                 var N = 9, N_HOR = N, N_VER = N;
@@ -674,12 +782,13 @@
                 app.scriptPreferences.enableRedraw = false;
 
                 var res = [];
-                if (sel.length === 2 && u.ctrl === true) {
-                    if (sel[0].name && sel[0].name.match(/\d{7}/)) return [];
-                    if (sel[1].name && sel[1].name.match(/\d{7}/)) return [];
-                    var name2 = this.executeMeasure(doc, u, -1);
-                    if (name2) res.push(name2);
-                    return res;
+
+                if ((u.measType === 'gap_h' || u.measType === 'gap_v') || (sel.length === 2 && u.ctrl === true)) {
+                    if (sel.length >= 2) {
+                        var name2 = this.executeMeasure(doc, u, -1);
+                        if (name2) res.push(name2);
+                        return res;
+                    }
                 }
 
                 for (var i = 0; i < sel.length; i++) {
@@ -699,8 +808,8 @@
     $.global.idDimensionEngine = Engine;
 
     // --- Build ScriptUI Window ---
-    var win = new Window("palette", "ID Dimension v1.3", undefined, { resizeable: false });
-    win.text = "ID Dimension v1.3";
+    var win = new Window("palette", "ID Dimension v1.4", undefined, { resizeable: false });
+    win.text = "ID Dimension v1.4";
     $.global.idDimensionPalette = win;
 
     win.orientation = "column";
@@ -712,21 +821,45 @@
     var pnlMeas = win.add("group");
     pnlMeas.orientation = "row";
     pnlMeas.alignment = ["center", "top"];
-    pnlMeas.spacing = 8;
+    pnlMeas.spacing = 6;
 
-    var grpDiam = pnlMeas.add("group");
-    grpDiam.orientation = "column";
-    grpDiam.spacing = 6;
-    grpDiam.alignChildren = ["center", "center"];
+    // LEFT: Gap Top/Bott & 4-Quadrant Diameters
+    var grpLeftBlock = pnlMeas.add("group");
+    grpLeftBlock.orientation = "column";
+    grpLeftBlock.spacing = 2;
+    grpLeftBlock.alignChildren = ["center", "center"];
 
-    var btnDiamTr = grpDiam.add("button", undefined, "\u00D8 \u2197");
-    btnDiamTr.size = [36, 24];
+    var rGapH = grpLeftBlock.add("group");
+    rGapH.orientation = "row";
+    rGapH.spacing = 2;
+    var btnGapTop = rGapH.add("button", undefined, "|\u2194|\u25B2");
+    btnGapTop.size = [32, 22];
+    btnGapTop.helpTip = "Gap Horizontal (Top)";
+    var btnGapBott = rGapH.add("button", undefined, "|\u2194|\u25BC");
+    btnGapBott.size = [32, 22];
+    btnGapBott.helpTip = "Gap Horizontal (Bottom)";
+
+    var rDiam1 = grpLeftBlock.add("group");
+    rDiam1.orientation = "row";
+    rDiam1.spacing = 2;
+    var btnDiamTl = rDiam1.add("button", undefined, "\u00D8 \u2196");
+    btnDiamTl.size = [32, 22];
+    btnDiamTl.helpTip = "Diameter (Top-Left)";
+    var btnDiamTr = rDiam1.add("button", undefined, "\u00D8 \u2197");
+    btnDiamTr.size = [32, 22];
     btnDiamTr.helpTip = "Diameter (Top-Right)";
 
-    var btnDiamBr = grpDiam.add("button", undefined, "\u00D8 \u2198");
-    btnDiamBr.size = [36, 24];
+    var rDiam2 = grpLeftBlock.add("group");
+    rDiam2.orientation = "row";
+    rDiam2.spacing = 2;
+    var btnDiamBl = rDiam2.add("button", undefined, "\u00D8 \u2199");
+    btnDiamBl.size = [32, 22];
+    btnDiamBl.helpTip = "Diameter (Bottom-Left)";
+    var btnDiamBr = rDiam2.add("button", undefined, "\u00D8 \u2198");
+    btnDiamBr.size = [32, 22];
     btnDiamBr.helpTip = "Diameter (Bottom-Right)";
 
+    // CENTER: Cross
     var grpCross = pnlMeas.add("group");
     grpCross.orientation = "column";
     grpCross.spacing = 2;
@@ -734,39 +867,62 @@
 
     var btnTop = grpCross.add("button", undefined, "\u25B2");
     btnTop.size = [30, 22];
-    btnTop.helpTip = "Top Dimension (Hold Alt for gap between 2 objects)";
+    btnTop.helpTip = "Top Dimension";
 
     var grpMid = grpCross.add("group");
     grpMid.orientation = "row";
     grpMid.spacing = 2;
 
     var btnLeft = grpMid.add("button", undefined, "\u25C0");
-    btnLeft.size = [26, 26];
+    btnLeft.size = [24, 22];
     btnLeft.helpTip = "Left Dimension";
 
     var btnCent = grpMid.add("button", undefined, "\u253C");
-    btnCent.size = [26, 26];
+    btnCent.size = [24, 22];
     btnCent.helpTip = "Center Point";
 
     var btnRight = grpMid.add("button", undefined, "\u25B6");
-    btnRight.size = [26, 26];
+    btnRight.size = [24, 22];
     btnRight.helpTip = "Right Dimension";
 
     var btnBott = grpCross.add("button", undefined, "\u25BC");
     btnBott.size = [30, 22];
     btnBott.helpTip = "Bottom Dimension";
 
-    var grpRad = pnlMeas.add("group");
-    grpRad.orientation = "column";
-    grpRad.spacing = 6;
-    grpRad.alignChildren = ["center", "center"];
+    // RIGHT: Gap Left/Right & 4-Quadrant Radii
+    var grpRightBlock = pnlMeas.add("group");
+    grpRightBlock.orientation = "column";
+    grpRightBlock.spacing = 2;
+    grpRightBlock.alignChildren = ["center", "center"];
 
-    var btnRadTr = grpRad.add("button", undefined, "R \u2197");
-    btnRadTr.size = [36, 24];
+    var rGapV = grpRightBlock.add("group");
+    rGapV.orientation = "row";
+    rGapV.spacing = 2;
+    var btnGapLeft = rGapV.add("button", undefined, "|\u2195|\u25C0");
+    btnGapLeft.size = [32, 22];
+    btnGapLeft.helpTip = "Gap Vertical (Left)";
+    var btnGapRight = rGapV.add("button", undefined, "|\u2195|\u25B6");
+    btnGapRight.size = [32, 22];
+    btnGapRight.helpTip = "Gap Vertical (Right)";
+
+    var rRad1 = grpRightBlock.add("group");
+    rRad1.orientation = "row";
+    rRad1.spacing = 2;
+    var btnRadTl = rRad1.add("button", undefined, "R \u2196");
+    btnRadTl.size = [32, 22];
+    btnRadTl.helpTip = "Radius (Top-Left)";
+    var btnRadTr = rRad1.add("button", undefined, "R \u2197");
+    btnRadTr.size = [32, 22];
     btnRadTr.helpTip = "Radius (Top-Right)";
 
-    var btnRadBr = grpRad.add("button", undefined, "R \u2198");
-    btnRadBr.size = [36, 24];
+    var rRad2 = grpRightBlock.add("group");
+    rRad2.orientation = "row";
+    rRad2.spacing = 2;
+    var btnRadBl = rRad2.add("button", undefined, "R \u2199");
+    btnRadBl.size = [32, 22];
+    btnRadBl.helpTip = "Radius (Bottom-Left)";
+    var btnRadBr = rRad2.add("button", undefined, "R \u2198");
+    btnRadBr.size = [32, 22];
     btnRadBr.helpTip = "Radius (Bottom-Right)";
 
     // --- 2. Settings Block ---
@@ -818,7 +974,19 @@
     var txtArrow = r4.add("edittext", undefined, "3.5");
     txtArrow.characters = 4;
 
-    // Row 5: font size & units
+    // Row 5: font selector
+    var rFont = pnlSet.add("group");
+    rFont.orientation = "row";
+    rFont.add("statictext", undefined, "font:").characters = 5;
+    var fontLabels = [];
+    for (var fi = 0; fi < POPULAR_FONTS.length; fi++) {
+        fontLabels.push(POPULAR_FONTS[fi].label);
+    }
+    var ddlFont = rFont.add("dropdownlist", undefined, fontLabels);
+    ddlFont.selection = 0;
+    ddlFont.alignment = ["fill", "center"];
+
+    // Row 6: font size & units
     var r5 = pnlSet.add("group");
     r5.orientation = "row";
     r5.add("statictext", undefined, "font size:").characters = 5;
@@ -828,7 +996,7 @@
     var ddlUnits = r5.add("dropdownlist", undefined, UNITS_LIST);
     ddlUnits.selection = 0;
 
-    // Row 6: CMYK inputs
+    // Row 7: CMYK inputs
     var r6 = pnlSet.add("group");
     r6.orientation = "row";
     r6.spacing = 3;
@@ -838,7 +1006,7 @@
     var txtY = r6.add("edittext", undefined, "0"); txtY.characters = 3; txtY.helpTip = "Yellow (0-100)";
     var txtK = r6.add("edittext", undefined, "100"); txtK.characters = 3; txtK.helpTip = "Black (0-100)";
 
-    // Row 7: Swatches
+    // Row 8: Swatches
     var r7 = pnlSet.add("group");
     r7.orientation = "row";
     r7.spacing = 3;
@@ -871,7 +1039,7 @@
         })(sIdx);
     }
 
-    // Row 8: out page, save, clear, default
+    // Row 9: out page, save, clear, default
     var r8 = pnlSet.add("group");
     r8.orientation = "row";
     r8.alignment = ["fill", "center"];
@@ -898,15 +1066,87 @@
     btnMax.alignment = ["fill", "center"];
 
     // --- UI State Management ---
-    function collectUI() {
-        var cVal = isNaN(parseFloat(txtC.text)) ? 0 : parseFloat(txtC.text);
-        var mVal = isNaN(parseFloat(txtM.text)) ? 0 : parseFloat(txtM.text);
-        var yVal = isNaN(parseFloat(txtY.text)) ? 0 : parseFloat(txtY.text);
-        var kVal = isNaN(parseFloat(txtK.text)) ? 0 : parseFloat(txtK.text);
+    function getSelectedFontName() {
+        var selIdx = ddlFont.selection ? ddlFont.selection.index : 0;
+        return (selIdx >= 0 && selIdx < POPULAR_FONTS.length) ? POPULAR_FONTS[selIdx].name : "default";
+    }
+
+    function setSelectedFontByName(name) {
+        if (!name) name = "default";
+        for (var i = 0; i < POPULAR_FONTS.length; i++) {
+            if (POPULAR_FONTS[i].name === name || POPULAR_FONTS[i].label === name) {
+                ddlFont.selection = i;
+                return;
+            }
+        }
+        ddlFont.selection = 0;
+    }
+
+    function getUIOptions(measType, side, isCtrl) {
+        var strkW = parseFloat(txtStroke.text) || 0.2;
+        var gap = parseFloat(txtGap.text) || 0.5;
+        var indent = parseFloat(txtIndent.text) || 1.0;
+        var len = parseFloat(txtLen.text) || 10;
+        var arW = parseFloat(txtArrow.text) || 3.5;
+        var fontSize = parseFloat(txtFontSize.text) || 14;
+        var precis = ddlPrecis.selection ? ddlPrecis.selection.index : 2;
+
+        var c = isNaN(parseFloat(txtC.text)) ? 0 : parseFloat(txtC.text);
+        var m = isNaN(parseFloat(txtM.text)) ? 0 : parseFloat(txtM.text);
+        var y = isNaN(parseFloat(txtY.text)) ? 0 : parseFloat(txtY.text);
+        var k = isNaN(parseFloat(txtK.text)) ? 0 : parseFloat(txtK.text);
+
+        var uIdx = ddlUnits.selection ? ddlUnits.selection.index : 0;
+        var unitStr = UNITS_LIST[uIdx] || 'mm';
 
         return {
+            measType: measType,
+            side: side || '',
+            ctrl: isCtrl || false,
+            strkW: strkW * Engine.PT_TO_MM,
+            gap: gap * Engine.PT_TO_MM,
+            stopBot: indent * Engine.PT_TO_MM,
+            stopTop: len * Engine.PT_TO_MM,
+            arW: arW * Engine.PT_TO_MM,
+            fontSize: fontSize,
+            precis: precis,
+            colComp: [c, m, y, k],
+            units: chkUnit.value ? unitStr : '',
+            unitType: unitStr,
+            scale: txtScale.text || '1:1',
+            addLay: chkLayer.value,
+            layName: txtLayer.text || 'layout',
+            fontName: getSelectedFontName(),
+            outArtboard: chkOutPage.value
+        };
+    }
+
+    function applyPreset(p) {
+        if (!p) return;
+        chkUnit.value = !!p.add_mm;
+        txtScale.text = (p.scale !== undefined) ? String(p.scale) : '1:1';
+        if (p.unit_select !== undefined) ddlUnits.selection = p.unit_select;
+        txtLen.text = (p.line_len !== undefined) ? String(p.line_len) : '10';
+        if (p.precis !== undefined) ddlPrecis.selection = p.precis;
+        txtStroke.text = (p.line_stroke !== undefined) ? String(p.line_stroke) : '0.2';
+        txtGap.text = (p.gap !== undefined) ? String(p.gap) : '0.5';
+        txtIndent.text = (p.line_indent !== undefined) ? String(p.line_indent) : '1.0';
+        txtArrow.text = (p.arrow_width !== undefined) ? String(p.arrow_width) : '3.5';
+        setSelectedFontByName(p.font_name);
+        txtFontSize.text = (p.font_size !== undefined) ? String(p.font_size) : '14';
+        txtC.text = (p.cyan !== undefined) ? String(p.cyan) : '0';
+        txtM.text = (p.magenta !== undefined) ? String(p.magenta) : '0';
+        txtY.text = (p.yellow !== undefined) ? String(p.yellow) : '0';
+        txtK.text = (p.black !== undefined) ? String(p.black) : '100';
+        chkLayer.value = !!p.add_layer;
+        txtLayer.text = (p.layer_name_text !== undefined) ? p.layer_name_text : 'layout';
+        chkOutPage.value = !!p.out_artboard;
+    }
+
+    function collectCurrentPreset() {
+        return {
             add_mm: chkUnit.value,
-            scale: txtScale.text || "1:1",
+            scale: txtScale.text,
             unit_select: ddlUnits.selection ? ddlUnits.selection.index : 0,
             line_len: parseFloat(txtLen.text) || 10,
             precis: ddlPrecis.selection ? ddlPrecis.selection.index : 2,
@@ -914,164 +1154,112 @@
             gap: parseFloat(txtGap.text) || 0.5,
             line_indent: parseFloat(txtIndent.text) || 1.0,
             arrow_width: parseFloat(txtArrow.text) || 3.5,
+            font_name: getSelectedFontName(),
             font_size: parseFloat(txtFontSize.text) || 14,
-            cyan: cVal,
-            magenta: mVal,
-            yellow: yVal,
-            black: kVal,
+            cyan: parseFloat(txtC.text) || 0,
+            magenta: parseFloat(txtM.text) || 0,
+            yellow: parseFloat(txtY.text) || 0,
+            black: parseFloat(txtK.text) || 100,
             add_layer: chkLayer.value,
-            layer_name_text: txtLayer.text,
+            layer_name_text: txtLayer.text || 'layout',
             out_artboard: chkOutPage.value
         };
     }
 
-    function applyUI(st) {
-        if (!st) return;
-        chkUnit.value = !!st.add_mm;
-        txtScale.text = String(st.scale !== undefined ? st.scale : "1:1");
-        ddlUnits.selection = (st.unit_select !== undefined) ? st.unit_select : 0;
-        txtLen.text = String(st.line_len !== undefined ? st.line_len : 10);
-        ddlPrecis.selection = (st.precis !== undefined) ? st.precis : 2;
-        txtStroke.text = String(st.line_stroke !== undefined ? st.line_stroke : 0.2);
-        txtGap.text = String(st.gap !== undefined ? st.gap : 0.5);
-        txtIndent.text = String(st.line_indent !== undefined ? st.line_indent : 1.0);
-        txtArrow.text = String(st.arrow_width !== undefined ? st.arrow_width : 3.5);
-        txtFontSize.text = String(st.font_size !== undefined ? st.font_size : 14);
-        txtC.text = String(st.cyan !== undefined ? st.cyan : 0);
-        txtM.text = String(st.magenta !== undefined ? st.magenta : 0);
-        txtY.text = String(st.yellow !== undefined ? st.yellow : 0);
-        txtK.text = String(st.black !== undefined ? st.black : 100);
-        chkLayer.value = !!st.add_layer;
-        txtLayer.text = st.layer_name_text || "layout";
-        chkOutPage.value = !!st.out_artboard;
-    }
-
     function saveCurrentState() {
-        appData.lastState = collectUI();
+        appData.lastState = collectCurrentPreset();
         savePrefs(appData);
     }
 
-    function handlePreset(key) {
-        if (chkSave.value) {
-            appData.presets[key] = collectUI();
-            savePrefs(appData);
-        } else {
-            applyUI(appData.presets[key] || DEFAULT_PRESETS[key]);
-            saveCurrentState();
-        }
-    }
+    // --- Wire Event Handlers ---
+    var lastMeasParams = null;
 
-    btnMin.onClick = function () { handlePreset("min"); };
-    btnMed.onClick = function () { handlePreset("med"); };
-    btnMax.onClick = function () { handlePreset("max"); };
-
-    btnClear.onClick = function () {
+    function runMeas(measType, side, isCtrl) {
         if (app.documents.length === 0) {
-            alert("Please open an InDesign document first.");
+            alert("Please open a document first.");
             return;
         }
-        try {
-            app.doScript("$.global.idDimensionEngine.deleteAll();", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
-        } catch (e) {
-            Engine.deleteAll();
+        var doc = app.activeDocument;
+        var sel = doc.selection || app.selection;
+        if (!sel || sel.length === 0) {
+            alert("Please select at least one object.");
+            return;
         }
+
+        saveCurrentState();
+        var opts = getUIOptions(measType, side, isCtrl);
+        lastMeasParams = { measType: measType, side: side, isCtrl: isCtrl };
+
+        app.doScript(function () {
+            Engine.run(opts);
+        }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension");
+    }
+
+    // Measurement button listeners
+    btnTop.onClick = function () { runMeas('linear', 'top', ScriptUI.environment.keyboardState.altKey); };
+    btnBott.onClick = function () { runMeas('linear', 'bott', ScriptUI.environment.keyboardState.altKey); };
+    btnLeft.onClick = function () { runMeas('linear', 'left', ScriptUI.environment.keyboardState.altKey); };
+    btnRight.onClick = function () { runMeas('linear', 'right', ScriptUI.environment.keyboardState.altKey); };
+    btnCent.onClick = function () { runMeas('cent', '', false); };
+
+    btnGapTop.onClick = function () { runMeas('gap_h', 'top', false); };
+    btnGapBott.onClick = function () { runMeas('gap_h', 'bott', false); };
+    btnGapLeft.onClick = function () { runMeas('gap_v', 'left', false); };
+    btnGapRight.onClick = function () { runMeas('gap_v', 'right', false); };
+
+    btnDiamTl.onClick = function () { runMeas('diam', 'tl', false); };
+    btnDiamTr.onClick = function () { runMeas('diam', 'tr', false); };
+    btnDiamBl.onClick = function () { runMeas('diam', 'bl', false); };
+    btnDiamBr.onClick = function () { runMeas('diam', 'br', false); };
+
+    btnRadTl.onClick = function () { runMeas('rad', 'tl', false); };
+    btnRadTr.onClick = function () { runMeas('rad', 'tr', false); };
+    btnRadBl.onClick = function () { runMeas('rad', 'bl', false); };
+    btnRadBr.onClick = function () { runMeas('rad', 'br', false); };
+
+    // Clear and Default listeners
+    btnClear.onClick = function () {
+        if (app.documents.length === 0) return;
+        app.doScript(function () {
+            Engine.deleteAll();
+        }, ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "Delete ID Dimensions");
     };
 
     btnDefault.onClick = function () {
-        if (confirm("Reset all settings and colors to defaults?")) {
-            appData = {
-                presets: DEFAULT_PRESETS,
-                swatches: DEFAULT_SWATCHES,
-                lastState: DEFAULT_PRESETS.med
-            };
-            savePrefs(appData);
-            applyUI(DEFAULT_PRESETS.med);
-        }
+        appData.presets = DEFAULT_PRESETS;
+        appData.swatches = DEFAULT_SWATCHES;
+        applyPreset(DEFAULT_PRESETS.med);
+        saveCurrentState();
     };
 
-    // Auto-save on edit
-    var inputs = [txtLen, txtScale, txtStroke, txtGap, txtIndent, txtArrow, txtFontSize, txtC, txtM, txtY, txtK, txtLayer];
-    for (var inpIdx = 0; inpIdx < inputs.length; inpIdx++) {
-        inputs[inpIdx].onChange = saveCurrentState;
-    }
-    chkUnit.onClick = saveCurrentState;
-    chkLayer.onClick = saveCurrentState;
-    chkOutPage.onClick = saveCurrentState;
-    ddlPrecis.onChange = saveCurrentState;
-    ddlUnits.onChange = saveCurrentState;
-
-    // --- Action Execution with InDesign Undo support ---
-    function runAction(type, side) {
-        try {
-            if (app.documents.length === 0) {
-                alert("Please open an InDesign document first.");
-                return;
-            }
-            var doc = app.activeDocument;
-            var sel = doc.selection || app.selection;
-            if (!sel || sel.length === 0) {
-                alert("Please select one or more objects on the page.");
-                return;
-            }
-
+    // Preset buttons listeners
+    function handlePreset(slotKey) {
+        if (chkSave.value) {
+            appData.presets[slotKey] = collectCurrentPreset();
+            savePrefs(appData);
+        } else {
+            var pr = appData.presets[slotKey] || DEFAULT_PRESETS[slotKey];
+            applyPreset(pr);
             saveCurrentState();
-            var ui = collectUI();
-            var PT_TO_MM = 2.834645668;
-            var selUnit = UNITS_LIST[ui.unit_select] || 'mm';
-
-            var isTwoObjs = (sel.length === 2);
-
-            var opts = {
-                measType: type,
-                side: side || '',
-                ctrl: isTwoObjs,
-                strkW: ui.line_stroke * PT_TO_MM,
-                gap: ui.gap * PT_TO_MM,
-                stopBot: ui.line_indent * PT_TO_MM,
-                stopTop: ui.line_len * PT_TO_MM,
-                arW: ui.arrow_width * PT_TO_MM,
-                fontSize: ui.font_size,
-                precis: ui.precis,
-                colComp: [ui.cyan, ui.magenta, ui.yellow, ui.black],
-                units: ui.add_mm ? selUnit : '',
-                unitType: selUnit,
-                scale: ui.scale,
-                addLay: ui.add_layer,
-                layName: ui.layer_name_text,
-                outArtboard: ui.out_artboard
-            };
-
-            var optsStr = stringifyJSON(opts);
-
-            try {
-                app.doScript("$.global.idDimensionEngine.run(" + optsStr + ");", ScriptLanguage.JAVASCRIPT, undefined, UndoModes.ENTIRE_SCRIPT, "ID Dimension: " + type);
-            } catch (e1) {
-                Engine.run(opts);
-            }
-
-        } catch (err) {
-            alert("Error running ID Dimension:\n" + err.message + "\nLine: " + err.line);
         }
     }
 
-    btnTop.onClick = function () { runAction('linear', 'top'); };
-    btnBott.onClick = function () { runAction('linear', 'bott'); };
-    btnLeft.onClick = function () { runAction('linear', 'left'); };
-    btnRight.onClick = function () { runAction('linear', 'right'); };
-    btnDiamTr.onClick = function () { runAction('diam', 'tr'); };
-    btnDiamBr.onClick = function () { runAction('diam', 'br'); };
-    btnRadTr.onClick = function () { runAction('rad', 'tr'); };
-    btnRadBr.onClick = function () { runAction('rad', 'br'); };
-    btnCent.onClick = function () { runAction('cent', ''); };
+    btnMin.onClick = function () { handlePreset('min'); };
+    btnMed.onClick = function () { handlePreset('med'); };
+    btnMax.onClick = function () { handlePreset('max'); };
 
-    // Initial populate
-    applyUI(appData.lastState || DEFAULT_PRESETS.med);
+    // Restore last used state
+    if (appData.lastState) {
+        applyPreset(appData.lastState);
+    } else {
+        applyPreset(DEFAULT_PRESETS.med);
+    }
 
-    // Show palette window
+    // Show window
     win.show();
 
-    } catch (fatalErr) {
-        alert("ID Dimension Startup Error:\n" + fatalErr.message + "\nLine: " + fatalErr.line);
+    } catch (eGlobal) {
+        alert("ID Dimension error:\n" + eGlobal.toString() + "\nLine: " + eGlobal.line);
     }
 
 })();

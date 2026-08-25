@@ -9,15 +9,15 @@ const Presets = (function() {
     const defaultPresets = {
         min: {
             add_mm: false, scale: '1:1', line_len: 5, precis: 0, line_stroke: 0.1, gap: 0.5, line_indent: 0.5, arrow_width: 2,
-            font_size: 8, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
+            font_name: 'default', font_size: 8, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
         },
         med: {
             add_mm: false, scale: '1:1', line_len: 10, precis: 2, line_stroke: 0.2, gap: 1, line_indent: 1, arrow_width: 3.5,
-            font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
+            font_name: 'default', font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
         },
         max: {
             add_mm: false, scale: '1:1', line_len: 20, precis: 3, line_stroke: 0.5, gap: 2, line_indent: 2, arrow_width: 5,
-            font_size: 24, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
+            font_name: 'default', font_size: 24, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
         }
     };
 
@@ -26,7 +26,7 @@ const Presets = (function() {
     // Default fallback state (the values hardcoded in index.html)
     const defaultGlobalState = {
         add_mm: false, scale: '1:1', unit_select: 'mm', line_len: 10, precis: 2, line_stroke: 0.2, gap: 0.5, line_indent: 1.0, arrow_width: 3.5,
-        font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
+        font_name: 'default', font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false
     };
 
     function init() {
@@ -51,6 +51,7 @@ const Presets = (function() {
             gap: document.getElementById('gap').value,
             line_indent: document.getElementById('line_indent').value,
             arrow_width: document.getElementById('arrow_width').value,
+            font_name: (typeof FontPicker !== 'undefined') ? FontPicker.getSelectedFontName() : 'default',
             font_size: document.getElementById('font_size').value,
             cyan: document.getElementById('cyan').value,
             magenta: document.getElementById('magenta').value,
@@ -73,6 +74,9 @@ const Presets = (function() {
         document.getElementById('gap').value = p.gap !== undefined ? p.gap : 0.5;
         document.getElementById('line_indent').value = p.line_indent !== undefined ? p.line_indent : 1.0;
         document.getElementById('arrow_width').value = p.arrow_width !== undefined ? p.arrow_width : 3.5;
+        if (typeof FontPicker !== 'undefined' && p.font_name !== undefined) {
+            FontPicker.setFontByName(p.font_name);
+        }
         document.getElementById('font_size').value = p.font_size !== undefined ? p.font_size : 14;
         document.getElementById('cyan').value = p.cyan !== undefined ? p.cyan : 0;
         document.getElementById('magenta').value = p.magenta !== undefined ? p.magenta : 0;
@@ -99,50 +103,65 @@ const Presets = (function() {
 
     function handlePresetClick(type) {
         const isSaveMode = document.getElementById('chk_save').checked;
+
         if (isSaveMode) {
-            currentPresets[type] = collectCurrentSettings();
+            const currentSettings = collectCurrentSettings();
+            currentPresets[type] = currentSettings;
             Storage.set(PRESETS_STORAGE_KEY, currentPresets);
-        } else {
-            applySettings(currentPresets[type] || defaultPresets[type]);
+            saveLastUsed();
             updateActiveHighlight(type);
+        } else {
+            const presetData = currentPresets[type];
+            if (presetData) {
+                applySettings(presetData);
+                Colors.updateColorPreview();
+                saveLastUsed();
+                updateActiveHighlight(type);
+                Measurements.reRunMeasurement();
+            }
         }
+    }
+
+    function restoreDefaults() {
+        currentPresets = JSON.parse(JSON.stringify(defaultPresets));
+        Storage.set(PRESETS_STORAGE_KEY, currentPresets);
+        applySettings(defaultGlobalState);
+        Colors.restoreDefaultSwatches();
+        saveLastUsed();
+        clearActiveHighlight();
+        Measurements.reRunMeasurement();
+    }
+
+    function saveLastUsed() {
+        const current = collectCurrentSettings();
+        Storage.set(LAST_STATE_STORAGE_KEY, current);
+    }
+
+    function loadLastUsed() {
+        const last = Storage.get(LAST_STATE_STORAGE_KEY);
+        if (last) {
+            applySettings(last);
+        } else {
+            applySettings(defaultGlobalState);
+        }
+        Colors.updateColorPreview();
     }
 
     function bindEvents() {
         document.getElementById('btn_preset_min').addEventListener('click', () => handlePresetClick('min'));
         document.getElementById('btn_preset_med').addEventListener('click', () => handlePresetClick('med'));
         document.getElementById('btn_preset_max').addEventListener('click', () => handlePresetClick('max'));
-        
+
         const btnDefault = document.getElementById('btn_default');
         if (btnDefault) {
-            btnDefault.addEventListener('click', () => {
-                if (confirm("Are you sure you want to reset all settings and saved colors to default values?")) {
-                    currentPresets = JSON.parse(JSON.stringify(defaultPresets));
-                    Storage.set(PRESETS_STORAGE_KEY, currentPresets);
-                    applySettings(defaultGlobalState);
-                    saveLastUsed();
-                    clearActiveHighlight();
-                    if (typeof Colors !== 'undefined' && typeof Colors.resetColors === 'function') {
-                        Colors.resetColors();
-                    }
-                }
-            });
+            btnDefault.addEventListener('click', restoreDefaults);
         }
-    }
-
-    function loadLastUsed() {
-        const lastUsed = Storage.get(LAST_STATE_STORAGE_KEY);
-        if (lastUsed) applySettings(lastUsed);
-    }
-
-    function saveLastUsed() {
-        Storage.set(LAST_STATE_STORAGE_KEY, collectCurrentSettings());
     }
 
     return {
         init,
-        loadLastUsed,
         saveLastUsed,
+        loadLastUsed,
         clearActiveHighlight
     };
 })();

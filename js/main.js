@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initialize logic modules
+    if (typeof FontPicker !== 'undefined') {
+        FontPicker.init();
+    }
     Presets.init();
     Colors.init();
     UI.init();

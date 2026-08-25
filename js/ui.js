@@ -8,11 +8,19 @@ const UI = (function() {
             'btn_bott': { type: 'linear', side: 'bott' },
             'btn_left': { type: 'linear', side: 'left' },
             'btn_right': { type: 'linear', side: 'right' },
+            'btn_cent': { type: 'cent', side: '' },
+            'btn_gap_top': { type: 'gap_h', side: 'top' },
+            'btn_gap_bott': { type: 'gap_h', side: 'bott' },
+            'btn_gap_left': { type: 'gap_v', side: 'left' },
+            'btn_gap_right': { type: 'gap_v', side: 'right' },
+            'btn_diam_tl': { type: 'diam', side: 'tl' },
             'btn_diam': { type: 'diam', side: 'tr' },
+            'btn_diam_bl': { type: 'diam', side: 'bl' },
             'btn_diam_br': { type: 'diam', side: 'br' },
+            'btn_rad_tl': { type: 'rad', side: 'tl' },
             'btn_rad': { type: 'rad', side: 'tr' },
-            'btn_rad_br': { type: 'rad', side: 'br' },
-            'btn_cent': { type: 'cent', side: '' }
+            'btn_rad_bl': { type: 'rad', side: 'bl' },
+            'btn_rad_br': { type: 'rad', side: 'br' }
         };
 
         for (const [id, params] of Object.entries(measMap)) {
