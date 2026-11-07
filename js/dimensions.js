@@ -529,7 +529,7 @@ var IDMeasurement = (function () {
                 labelText = lablH + units;
                 xPos = left - stopTop;
 
-                tfInfo = _addText(labelText, xPos, midY, -90);
+                tfInfo = _addText(labelText, xPos, midY, 90);
                 tw = tfInfo.width;
                 th = tfInfo.height;
 
@@ -564,7 +564,7 @@ var IDMeasurement = (function () {
                 labelText = lablH + units;
                 xPos = right + stopTop;
 
-                tfInfo = _addText(labelText, xPos, midY, -90);
+                tfInfo = _addText(labelText, xPos, midY, 90);
                 tw = tfInfo.width;
                 th = tfInfo.height;
 

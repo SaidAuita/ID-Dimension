@@ -44,7 +44,6 @@ const UI = (function() {
                 Presets.saveLastUsed();
                 if (e.target.id !== 'chk_save') {
                     Presets.clearActiveHighlight();
-                    Measurements.reRunMeasurement();
                 }
             });
         });

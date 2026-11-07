@@ -134,7 +134,6 @@ const Presets = (function() {
                 Colors.updateColorPreview();
                 saveLastUsed();
                 updateActiveHighlight(type);
-                Measurements.reRunMeasurement();
             }
         }
     }
@@ -146,7 +145,6 @@ const Presets = (function() {
         Colors.restoreDefaultSwatches();
         saveLastUsed();
         clearActiveHighlight();
-        Measurements.reRunMeasurement();
     }
 
     function saveLastUsed() {
