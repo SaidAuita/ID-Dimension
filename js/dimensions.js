@@ -248,7 +248,7 @@ var IDMeasurement = (function () {
         var side = u.side;
         var strkW = u.strkW;
         var units = u.units ? ' ' + u.units : '';
-        var arW = u.arW;
+        var arW = (u.arW !== undefined && !isNaN(u.arW) && u.arW > 0) ? u.arW : 0;
         var gap = u.gap;
         var stopBot = u.stopBot;
         var stopTop = u.stopTop;
@@ -260,7 +260,7 @@ var IDMeasurement = (function () {
         var outArtboard = u.outArtboard;
         var fontName = u.fontName || 'default';
 
-        var arH = arW / 1.9;
+        var arH = arW > 0 ? (arW / 1.9) : 0;
         var col = getOrCreateCmykColor(doc, u.colComp);
         var noneSwatch = doc.swatches.itemByName("None");
 
@@ -386,6 +386,7 @@ var IDMeasurement = (function () {
         }
 
         function _addArrow(points) {
+            if (!points || points.length === 0 || arW <= 0) return null;
             var poly = targetParent.polygons.add();
             if (lay && lay.isValid) poly.itemLayer = lay;
             poly.paths[0].entirePath = points;
@@ -470,17 +471,21 @@ var IDMeasurement = (function () {
                     // Inside layout
                     _addLine([left, yPos], [midX - tw / 2 - gap, yPos]);
                     _addLine([midX + tw / 2 + gap, yPos], [right, yPos]);
-                    _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
-                    _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
+                    if (arW > 0) {
+                        _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
+                        _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
+                    }
                 } else {
                     // Outside layout: continuous line between witness lines!
                     _addLine([left, yPos], [right, yPos]);
-                    // Left extension & arrow pointing inwards
-                    _addLine([left, yPos], [left - arW * 2, yPos]);
-                    _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
-                    // Right extension & arrow pointing inwards
-                    _addLine([right, yPos], [right + arW * 2, yPos]);
-                    _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
+                    if (arW > 0) {
+                        // Left extension & arrow pointing inwards
+                        _addLine([left, yPos], [left - arW * 2, yPos]);
+                        _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
+                        // Right extension & arrow pointing inwards
+                        _addLine([right, yPos], [right + arW * 2, yPos]);
+                        _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
+                    }
                     // Text to the right
                     tfInfo.frame.geometricBounds = [yPos - th / 2, right + arW * 2 + gap, yPos + th / 2, right + arW * 2 + gap + tw];
                 }
@@ -501,17 +506,21 @@ var IDMeasurement = (function () {
                     // Inside layout
                     _addLine([left, yPos], [midX - tw / 2 - gap, yPos]);
                     _addLine([midX + tw / 2 + gap, yPos], [right, yPos]);
-                    _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
-                    _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
+                    if (arW > 0) {
+                        _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
+                        _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
+                    }
                 } else {
                     // Outside layout: continuous line between witness lines!
                     _addLine([left, yPos], [right, yPos]);
-                    // Left extension & arrow
-                    _addLine([left, yPos], [left - arW * 2, yPos]);
-                    _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
-                    // Right extension & arrow
-                    _addLine([right, yPos], [right + arW * 2, yPos]);
-                    _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
+                    if (arW > 0) {
+                        // Left extension & arrow
+                        _addLine([left, yPos], [left - arW * 2, yPos]);
+                        _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
+                        // Right extension & arrow
+                        _addLine([right, yPos], [right + arW * 2, yPos]);
+                        _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
+                    }
                     // Text to the right
                     tfInfo.frame.geometricBounds = [yPos - th / 2, right + arW * 2 + gap, yPos + th / 2, right + arW * 2 + gap + tw];
                 }
@@ -532,17 +541,21 @@ var IDMeasurement = (function () {
                     // Inside layout
                     _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
                     _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
-                    _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
-                    _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
+                    if (arW > 0) {
+                        _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
+                        _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
+                    }
                 } else {
                     // Outside layout: continuous vertical line between witness lines!
                     _addLine([xPos, top], [xPos, bott]);
-                    // Top extension & arrow
-                    _addLine([xPos, top], [xPos, top - arW * 2]);
-                    _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
-                    // Bottom extension & arrow
-                    _addLine([xPos, bott], [xPos, bott + arW * 2]);
-                    _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
+                    if (arW > 0) {
+                        // Top extension & arrow
+                        _addLine([xPos, top], [xPos, top - arW * 2]);
+                        _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
+                        // Bottom extension & arrow
+                        _addLine([xPos, bott], [xPos, bott + arW * 2]);
+                        _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
+                    }
                     // Text below bottom
                     tfInfo.frame.geometricBounds = [bott + arW * 2 + gap, xPos - th / 2, bott + arW * 2 + gap + tw, xPos + th / 2];
                 }
@@ -563,17 +576,21 @@ var IDMeasurement = (function () {
                     // Inside layout
                     _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
                     _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
-                    _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
-                    _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
+                    if (arW > 0) {
+                        _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
+                        _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
+                    }
                 } else {
                     // Outside layout: continuous vertical line between witness lines!
                     _addLine([xPos, top], [xPos, bott]);
-                    // Top extension & arrow
-                    _addLine([xPos, top], [xPos, top - arW * 2]);
-                    _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
-                    // Bottom extension & arrow
-                    _addLine([xPos, bott], [xPos, bott + arW * 2]);
-                    _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
+                    if (arW > 0) {
+                        // Top extension & arrow
+                        _addLine([xPos, top], [xPos, top - arW * 2]);
+                        _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
+                        // Bottom extension & arrow
+                        _addLine([xPos, bott], [xPos, bott + arW * 2]);
+                        _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
+                    }
                     // Text below bottom
                     tfInfo.frame.geometricBounds = [bott + arW * 2 + gap, xPos - th / 2, bott + arW * 2 + gap + tw, xPos + th / 2];
                 }
@@ -597,22 +614,24 @@ var IDMeasurement = (function () {
             _addLine([midX, midY], [xr, yr]);
 
             // Arrow at circle edge pointing outwards
-            var arrowTip = [xr, yr];
-            var arrowBase1, arrowBase2;
-            if (isLeft && isBottom) {
-                arrowBase1 = [xr + arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
-                arrowBase2 = [xr + arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
-            } else if (isLeft && !isBottom) {
-                arrowBase1 = [xr + arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
-                arrowBase2 = [xr + arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
-            } else if (!isLeft && isBottom) {
-                arrowBase1 = [xr - arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
-                arrowBase2 = [xr - arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
-            } else {
-                arrowBase1 = [xr - arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
-                arrowBase2 = [xr - arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+            if (arW > 0) {
+                var arrowTip = [xr, yr];
+                var arrowBase1, arrowBase2;
+                if (isLeft && isBottom) {
+                    arrowBase1 = [xr + arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
+                    arrowBase2 = [xr + arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
+                } else if (isLeft && !isBottom) {
+                    arrowBase1 = [xr + arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+                    arrowBase2 = [xr + arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
+                } else if (!isLeft && isBottom) {
+                    arrowBase1 = [xr - arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
+                    arrowBase2 = [xr - arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
+                } else {
+                    arrowBase1 = [xr - arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
+                    arrowBase2 = [xr - arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+                }
+                _addArrow([arrowTip, arrowBase1, arrowBase2, arrowTip]);
             }
-            _addArrow([arrowTip, arrowBase1, arrowBase2, arrowTip]);
 
             // Leader lines & landing shelf
             var kneeX = isLeft ? (xr - stopTop * cos45) : (xr + stopTop * cos45);
@@ -651,18 +670,20 @@ var IDMeasurement = (function () {
             _addLine([x1, y1], [x2, y2]);
 
             // Arrows at both ends
-            if (isLeft && isBottom) {
-                _addArrow([[x1, y1], [x1 - arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1 - arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1, y1]]);
-                _addArrow([[x2, y2], [x2 + arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2 + arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
-            } else if (isLeft && !isBottom) {
-                _addArrow([[x1, y1], [x1 - arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1 - arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1, y1]]);
-                _addArrow([[x2, y2], [x2 + arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2 + arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
-            } else if (!isLeft && isBottom) {
-                _addArrow([[x1, y1], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
-                _addArrow([[x2, y2], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
-            } else {
-                _addArrow([[x1, y1], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
-                _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+            if (arW > 0) {
+                if (isLeft && isBottom) {
+                    _addArrow([[x1, y1], [x1 - arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1 - arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1, y1]]);
+                    _addArrow([[x2, y2], [x2 + arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2 + arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
+                } else if (isLeft && !isBottom) {
+                    _addArrow([[x1, y1], [x1 - arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1 - arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1, y1]]);
+                    _addArrow([[x2, y2], [x2 + arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2 + arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
+                } else if (!isLeft && isBottom) {
+                    _addArrow([[x1, y1], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
+                    _addArrow([[x2, y2], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+                } else {
+                    _addArrow([[x1, y1], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
+                    _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d - (arH / 2) * cos45d], [x2, y2]]);
+                }
             }
 
             // Leader line & landing shelf

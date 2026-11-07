@@ -107,6 +107,12 @@ input[type=number] {
     margin: 0;
 }
 
+.arrow-label {
+    width: 48px;
+    justify-content: flex-end;
+    margin-right: 2px;
+}
+
 .hostInput {
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(128, 128, 128, 0.4);
@@ -119,6 +125,11 @@ input[type=number] {
 }
 .hostInput:focus {
     border-color: #2680eb;
+}
+.hostInput:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .num-input {

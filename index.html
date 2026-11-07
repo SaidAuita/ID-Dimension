@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <link id="hostStyle" rel="stylesheet" href="css/styles.css"/>
-    <title>ID Dimension v1.4</title>
+    <title>ID Dimension v1.4.1</title>
 </head>
 <body class="hostElt">
 
@@ -122,8 +122,8 @@
         <div class="row">
             <label class="prop-label">indent:</label>
             <input type="number" id="line_indent" class="hostInput num-input" step="0.5" value="1.0"/>
-            <label class="prop-label">arrow:</label>
-            <input type="number" id="arrow_width" class="hostInput num-input" step="0.5" value="3.5"/>
+            <label class="checkbox-label arrow-label" title="Dimension arrows ON/OFF"><input type="checkbox" id="use_arrow" checked/> arrow:</label>
+            <input type="number" id="arrow_width" class="hostInput num-input" step="0.5" value="3.5" min="0" placeholder="off" title="Arrow length (0 or empty = no arrows)"/>
         </div>
 
         <div class="row font-row">

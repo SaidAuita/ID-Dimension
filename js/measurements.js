@@ -28,7 +28,19 @@ const Measurements = (function() {
         const gap = parseFloat(document.getElementById('gap').value) || 0.5;
         const indent = parseFloat(document.getElementById('line_indent').value) || 1.0;
         const len = parseFloat(document.getElementById('line_len').value) || 10;
-        const arW = parseFloat(document.getElementById('arrow_width').value) || 3.5;
+
+        // Arrow toggle and width (0 or empty = no arrows)
+        const useArrow = document.getElementById('use_arrow') ? document.getElementById('use_arrow').checked : true;
+        const arrowInput = document.getElementById('arrow_width');
+        const arrowValStr = arrowInput ? arrowInput.value.trim() : '';
+        let arW = 0;
+        if (useArrow && arrowValStr !== '') {
+            const parsed = parseFloat(arrowValStr);
+            if (!isNaN(parsed) && parsed > 0) {
+                arW = parsed;
+            }
+        }
+
         const fontSize = parseFloat(document.getElementById('font_size').value) || 14;
         
         let precisVal = document.getElementById('precis').value;

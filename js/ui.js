@@ -59,6 +59,47 @@ const UI = (function() {
         }
     }
 
+    function bindArrowToggle() {
+        const useArrow = document.getElementById('use_arrow');
+        const arrowWidth = document.getElementById('arrow_width');
+        if (!useArrow || !arrowWidth) return;
+
+        function syncArrowDisabled() {
+            if (useArrow.checked) {
+                arrowWidth.disabled = false;
+                const val = parseFloat(arrowWidth.value);
+                if (isNaN(val) || val <= 0) {
+                    arrowWidth.value = arrowWidth.dataset.lastVal || '3.5';
+                }
+            } else {
+                const val = parseFloat(arrowWidth.value);
+                if (!isNaN(val) && val > 0) {
+                    arrowWidth.dataset.lastVal = arrowWidth.value;
+                }
+                arrowWidth.disabled = true;
+            }
+        }
+
+        useArrow.addEventListener('change', () => {
+            syncArrowDisabled();
+        });
+
+        arrowWidth.addEventListener('change', () => {
+            const valStr = arrowWidth.value.trim();
+            const val = parseFloat(valStr);
+            if (valStr === '' || (!isNaN(val) && val <= 0)) {
+                useArrow.checked = false;
+                syncArrowDisabled();
+            } else if (!isNaN(val) && val > 0) {
+                useArrow.checked = true;
+                arrowWidth.disabled = false;
+                arrowWidth.dataset.lastVal = valStr;
+            }
+        });
+
+        syncArrowDisabled();
+    }
+
     function bindFooterLinks() {
         const csInterface = new CSInterface();
         function openURL(url) {
@@ -96,6 +137,7 @@ const UI = (function() {
 
     function init() {
         bindMeasurementButtons();
+        bindArrowToggle();
         bindSaveStateOnInput();
         bindClearButton();
         bindFooterLinks();

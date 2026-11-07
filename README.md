@@ -1,4 +1,4 @@
-# ID Dimension v1.4
+# ID Dimension v1.4.1
 
 ![ID Dimension Interface](images/ID_Dimension_1_4.png)
 
@@ -18,6 +18,7 @@ This repository includes **two versions** of the tool in one package:
 ### Main Features and Capabilities
 * **Two UI options** — Choose between a modern dockable panel (CEP) or a lightweight floating ScriptUI palette (`.jsx`).
 * **Cross-platform** — Fully supports **Windows** and **macOS** (including Apple Silicon & macOS Sequoia).
+* **Arrow toggle (`arrow`)** — Quick ON/OFF checkbox to enable or disable arrows on dimension lines. Setting the size to `0` or leaving the field empty automatically turns arrows off completely.
 * **Searchable Font Picker (`font`)** — Fast font selection directly in the panel with instant search, caching, and recently used fonts.
 * **4-Direction Gap Measurement** — Dedicated buttons for measuring horizontal gap (Top / Bottom) and vertical gap (Left / Right) between two selected objects.
 * **4-Quadrant Radius & Diameter** — Measure circle radius (`R`) and diameter (`Ø`) in all 4 directions (Top-Left, Top-Right, Bottom-Left, Bottom-Right) with dedicated horizontal landing shelves.
@@ -113,6 +114,7 @@ No registry or terminal tweaks needed.
 ### Основные возможности
 * **Два варианта интерфейса** — выбирайте между современной закрепляемой панелью и легкой плавающей палитрой ScriptUI.
 * **Кроссплатформенность** — полная поддержка **Windows** и **macOS** (включая Apple Silicon и macOS Sequoia).
+* **Отключение стрелок (`arrow`)** — быстрый чекбокс ON/OFF для включения или отключения стрелок на размерных линиях. Установка размера в `0` или очистка поля также автоматически отключает стрелки.
 * **Поиск и выбор шрифта (`font`)** — быстрый поиск и выбор установленных гарнитур с умным фильтром и кэшированием.
 * **4 направления зазора между объектами** — отдельные кнопки для измерения точного расстояния между 2 объектами по горизонтали (сверху/снизу) и по вертикали (слева/справа).
 * **4 квадранта для радиуса и диаметра** — измерение радиуса (`R`) и диаметра (`Ø`) во все 4 стороны (вверх-влево, вверх-вправо, вниз-влево, вниз-вправо) с горизонтальной полочкой-площадкой.

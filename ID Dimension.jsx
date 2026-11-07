@@ -29,15 +29,15 @@
 
     var DEFAULT_PRESETS = {
         min: {
-            add_mm: false, unit_select: 0, line_len: 5, precis: 0, line_stroke: 0.1, gap: 0.5, line_indent: 0.5, arrow_width: 2,
+            use_arrow: true, add_mm: false, unit_select: 0, line_len: 5, precis: 0, line_stroke: 0.1, gap: 0.5, line_indent: 0.5, arrow_width: 2,
             font_name: 'default', font_size: 8, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
         },
         med: {
-            add_mm: false, unit_select: 0, line_len: 10, precis: 2, line_stroke: 0.2, gap: 1, line_indent: 1, arrow_width: 3.5,
+            use_arrow: true, add_mm: false, unit_select: 0, line_len: 10, precis: 2, line_stroke: 0.2, gap: 1, line_indent: 1, arrow_width: 3.5,
             font_name: 'default', font_size: 14, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
         },
         max: {
-            add_mm: false, unit_select: 0, line_len: 20, precis: 3, line_stroke: 0.5, gap: 2, line_indent: 2, arrow_width: 5,
+            use_arrow: true, add_mm: false, unit_select: 0, line_len: 20, precis: 3, line_stroke: 0.5, gap: 2, line_indent: 2, arrow_width: 5,
             font_name: 'default', font_size: 24, cyan: 0, magenta: 0, yellow: 0, black: 100, add_layer: false, layer_name_text: 'layout', out_artboard: false, scale: '1:1'
         }
     };
@@ -374,7 +374,7 @@
             var side = u.side;
             var strkW = u.strkW;
             var units = u.units ? ' ' + u.units : '';
-            var arW = u.arW;
+            var arW = (u.arW !== undefined && u.arW > 0) ? u.arW : 0;
             var gap = u.gap;
             var stopBot = u.stopBot;
             var stopTop = u.stopTop;
@@ -386,7 +386,7 @@
             var outArtboard = u.outArtboard;
             var fontName = u.fontName || 'default';
 
-            var arH = arW / 1.9;
+            var arH = arW > 0 ? (arW / 1.9) : 0;
             var col = this.getOrCreateCmykColor(doc, u.colComp);
             var noneSwatch = doc.swatches.itemByName("None");
 
@@ -513,6 +513,7 @@
             }
 
             function _addArrow(points) {
+                if (!points || points.length === 0 || arW <= 0) return null;
                 var poly = targetParent.polygons.add();
                 if (lay && lay.isValid) poly.itemLayer = lay;
                 poly.paths[0].entirePath = points;
@@ -595,14 +596,18 @@
                     if (tw < (elW - gap * 2 - arW * 3)) {
                         _addLine([left, yPos], [midX - tw / 2 - gap, yPos]);
                         _addLine([midX + tw / 2 + gap, yPos], [right, yPos]);
-                        _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
-                        _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
+                        if (arW > 0) {
+                            _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
+                            _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
+                        }
                     } else {
                         _addLine([left, yPos], [right, yPos]);
-                        _addLine([left, yPos], [left - arW * 2, yPos]);
-                        _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
-                        _addLine([right, yPos], [right + arW * 2, yPos]);
-                        _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
+                        if (arW > 0) {
+                            _addLine([left, yPos], [left - arW * 2, yPos]);
+                            _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
+                            _addLine([right, yPos], [right + arW * 2, yPos]);
+                            _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
+                        }
                         tfInfo.frame.geometricBounds = [yPos - th / 2, right + arW * 2 + gap, yPos + th / 2, right + arW * 2 + gap + tw];
                     }
 
@@ -620,14 +625,18 @@
                     if (tw < (elW - gap * 2 - arW * 3)) {
                         _addLine([left, yPos], [midX - tw / 2 - gap, yPos]);
                         _addLine([midX + tw / 2 + gap, yPos], [right, yPos]);
-                        _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
-                        _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
+                        if (arW > 0) {
+                            _addArrow([[left, yPos], [left + arW, yPos - arH / 2], [left + arW, yPos + arH / 2], [left, yPos]]);
+                            _addArrow([[right, yPos], [right - arW, yPos - arH / 2], [right - arW, yPos + arH / 2], [right, yPos]]);
+                        }
                     } else {
                         _addLine([left, yPos], [right, yPos]);
-                        _addLine([left, yPos], [left - arW * 2, yPos]);
-                        _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
-                        _addLine([right, yPos], [right + arW * 2, yPos]);
-                        _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
+                        if (arW > 0) {
+                            _addLine([left, yPos], [left - arW * 2, yPos]);
+                            _addArrow([[left, yPos], [left - arW, yPos - arH / 2], [left - arW, yPos + arH / 2], [left, yPos]]);
+                            _addLine([right, yPos], [right + arW * 2, yPos]);
+                            _addArrow([[right, yPos], [right + arW, yPos - arH / 2], [right + arW, yPos + arH / 2], [right, yPos]]);
+                        }
                         tfInfo.frame.geometricBounds = [yPos - th / 2, right + arW * 2 + gap, yPos + th / 2, right + arW * 2 + gap + tw];
                     }
 
@@ -645,14 +654,18 @@
                     if (tw < (elH - gap * 2 - arW * 3)) {
                         _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
                         _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
-                        _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
-                        _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
+                        if (arW > 0) {
+                            _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
+                            _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
+                        }
                     } else {
                         _addLine([xPos, top], [xPos, bott]);
-                        _addLine([xPos, top], [xPos, top - arW * 2]);
-                        _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
-                        _addLine([xPos, bott], [xPos, bott + arW * 2]);
-                        _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
+                        if (arW > 0) {
+                            _addLine([xPos, top], [xPos, top - arW * 2]);
+                            _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
+                            _addLine([xPos, bott], [xPos, bott + arW * 2]);
+                            _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
+                        }
                         tfInfo.frame.geometricBounds = [bott + arW * 2 + gap, xPos - th / 2, bott + arW * 2 + gap + tw, xPos + th / 2];
                     }
 
@@ -670,14 +683,18 @@
                     if (tw < (elH - gap * 2 - arW * 3)) {
                         _addLine([xPos, top], [xPos, midY - tw / 2 - gap]);
                         _addLine([xPos, midY + tw / 2 + gap], [xPos, bott]);
-                        _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
-                        _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
+                        if (arW > 0) {
+                            _addArrow([[xPos, top], [xPos - arH / 2, top + arW], [xPos + arH / 2, top + arW], [xPos, top]]);
+                            _addArrow([[xPos, bott], [xPos - arH / 2, bott - arW], [xPos + arH / 2, bott - arW], [xPos, bott]]);
+                        }
                     } else {
                         _addLine([xPos, top], [xPos, bott]);
-                        _addLine([xPos, top], [xPos, top - arW * 2]);
-                        _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
-                        _addLine([xPos, bott], [xPos, bott + arW * 2]);
-                        _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
+                        if (arW > 0) {
+                            _addLine([xPos, top], [xPos, top - arW * 2]);
+                            _addArrow([[xPos, top], [xPos - arH / 2, top - arW], [xPos + arH / 2, top - arW], [xPos, top]]);
+                            _addLine([xPos, bott], [xPos, bott + arW * 2]);
+                            _addArrow([[xPos, bott], [xPos - arH / 2, bott + arW], [xPos + arH / 2, bott + arW], [xPos, bott]]);
+                        }
                         tfInfo.frame.geometricBounds = [bott + arW * 2 + gap, xPos - th / 2, bott + arW * 2 + gap + tw, xPos + th / 2];
                     }
                 }
@@ -698,22 +715,24 @@
 
                 _addLine([midX, midY], [xr, yr]);
 
-                var arrowTip = [xr, yr];
-                var arrowBase1, arrowBase2;
-                if (isLeft && isBottom) {
-                    arrowBase1 = [xr + arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
-                    arrowBase2 = [xr + arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
-                } else if (isLeft && !isBottom) {
-                    arrowBase1 = [xr + arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
-                    arrowBase2 = [xr + arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
-                } else if (!isLeft && isBottom) {
-                    arrowBase1 = [xr - arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
-                    arrowBase2 = [xr - arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
-                } else {
-                    arrowBase1 = [xr - arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
-                    arrowBase2 = [xr - arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+                if (arW > 0) {
+                    var arrowTip = [xr, yr];
+                    var arrowBase1, arrowBase2;
+                    if (isLeft && isBottom) {
+                        arrowBase1 = [xr + arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
+                        arrowBase2 = [xr + arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
+                    } else if (isLeft && !isBottom) {
+                        arrowBase1 = [xr + arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+                        arrowBase2 = [xr + arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
+                    } else if (!isLeft && isBottom) {
+                        arrowBase1 = [xr - arW * cos45 - (arH / 2) * sin45, yr - arW * sin45 + (arH / 2) * cos45];
+                        arrowBase2 = [xr - arW * cos45 + (arH / 2) * sin45, yr - arW * sin45 - (arH / 2) * cos45];
+                    } else {
+                        arrowBase1 = [xr - arW * cos45 + (arH / 2) * sin45, yr + arW * sin45 + (arH / 2) * cos45];
+                        arrowBase2 = [xr - arW * cos45 - (arH / 2) * sin45, yr + arW * sin45 - (arH / 2) * cos45];
+                    }
+                    _addArrow([arrowTip, arrowBase1, arrowBase2, arrowTip]);
                 }
-                _addArrow([arrowTip, arrowBase1, arrowBase2, arrowTip]);
 
                 var kneeX = isLeft ? (xr - stopTop * cos45) : (xr + stopTop * cos45);
                 var kneeY = isBottom ? (yr + stopTop * sin45) : (yr - stopTop * sin45);
@@ -748,7 +767,8 @@
 
                 _addLine([x1, y1], [x2, y2]);
 
-                if (isLeft && isBottom) {
+                if (arW > 0) {
+                    if (isLeft && isBottom) {
                     _addArrow([[x1, y1], [x1 - arW * cos45d - (arH / 2) * sin45d, y1 + arW * sin45d - (arH / 2) * cos45d], [x1 - arW * cos45d + (arH / 2) * sin45d, y1 + arW * sin45d + (arH / 2) * cos45d], [x1, y1]]);
                     _addArrow([[x2, y2], [x2 + arW * cos45d - (arH / 2) * sin45d, y2 - arW * sin45d - (arH / 2) * cos45d], [x2 + arW * cos45d + (arH / 2) * sin45d, y2 - arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
                 } else if (isLeft && !isBottom) {
@@ -761,6 +781,7 @@
                     _addArrow([[x1, y1], [x1 + arW * cos45d + (arH / 2) * sin45d, y1 - arW * sin45d + (arH / 2) * cos45d], [x1 + arW * cos45d - (arH / 2) * sin45d, y1 - arW * sin45d - (arH / 2) * cos45d], [x1, y1]]);
                     _addArrow([[x2, y2], [x2 - arW * cos45d + (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2 - arW * cos45d - (arH / 2) * sin45d, y2 + arW * sin45d + (arH / 2) * cos45d], [x2, y2]]);
                 }
+            }
 
                 var kneeXd = isLeft ? (x2 - stopTop * cos45d) : (x2 + stopTop * cos45d);
                 var kneeYd = isBottom ? (y2 + stopTop * sin45d) : (y2 - stopTop * sin45d);
@@ -1040,9 +1061,33 @@
     r4.add("statictext", undefined, "indent:").characters = 5;
     var txtIndent = r4.add("edittext", undefined, "1.0");
     txtIndent.characters = 4;
-    r4.add("statictext", undefined, "arrow:").characters = 4;
+    var chkArrow = r4.add("checkbox", undefined, "arrow:");
+    chkArrow.value = true;
     var txtArrow = r4.add("edittext", undefined, "3.5");
     txtArrow.characters = 4;
+
+    chkArrow.onClick = function () {
+        txtArrow.enabled = chkArrow.value;
+        if (chkArrow.value) {
+            var v = parseFloat(txtArrow.text);
+            if (isNaN(v) || v <= 0) {
+                txtArrow.text = "3.5";
+            }
+        }
+        saveCurrentState();
+    };
+
+    txtArrow.onChange = function () {
+        var v = parseFloat(txtArrow.text);
+        if (isNaN(v) || v <= 0) {
+            chkArrow.value = false;
+            txtArrow.enabled = false;
+        } else {
+            chkArrow.value = true;
+            txtArrow.enabled = true;
+        }
+        saveCurrentState();
+    };
 
     // Row 5: font selector
     var rFont = pnlSet.add("group");
@@ -1158,7 +1203,9 @@
         var gap = parseFloat(txtGap.text) || 0.5;
         var indent = parseFloat(txtIndent.text) || 1.0;
         var len = parseFloat(txtLen.text) || 10;
-        var arW = parseFloat(txtArrow.text) || 3.5;
+        var useArrow = chkArrow.value;
+        var rawArW = parseFloat(txtArrow.text);
+        var arW = (useArrow && !isNaN(rawArW) && rawArW > 0) ? rawArW : 0;
         var fontSize = parseFloat(txtFontSize.text) || 14;
         var precis = ddlPrecis.selection ? ddlPrecis.selection.index : 2;
 
@@ -1179,6 +1226,7 @@
             stopBot: indent * Engine.PT_TO_MM,
             stopTop: len * Engine.PT_TO_MM,
             arW: arW * Engine.PT_TO_MM,
+            use_arrow: useArrow && (arW > 0),
             fontSize: fontSize,
             precis: precis,
             colComp: [c, m, y, k],
@@ -1206,6 +1254,13 @@
         txtStroke.text = (p.line_stroke !== undefined) ? String(p.line_stroke) : '0.2';
         txtGap.text = (p.gap !== undefined) ? String(p.gap) : '0.5';
         txtIndent.text = (p.line_indent !== undefined) ? String(p.line_indent) : '1.0';
+        var useAr = (p.use_arrow !== undefined) ? !!p.use_arrow : true;
+        var arVal = (p.arrow_width !== undefined) ? parseFloat(p.arrow_width) : 3.5;
+        if (isNaN(arVal) || arVal <= 0) {
+            useAr = false;
+        }
+        chkArrow.value = useAr;
+        txtArrow.enabled = useAr;
         txtArrow.text = (p.arrow_width !== undefined) ? String(p.arrow_width) : '3.5';
         setSelectedFontByName(p.font_name);
         txtFontSize.text = (p.font_size !== undefined) ? String(p.font_size) : '14';
@@ -1228,7 +1283,8 @@
             line_stroke: parseFloat(txtStroke.text) || 0.2,
             gap: parseFloat(txtGap.text) || 0.5,
             line_indent: parseFloat(txtIndent.text) || 1.0,
-            arrow_width: parseFloat(txtArrow.text) || 3.5,
+            use_arrow: chkArrow.value && (parseFloat(txtArrow.text) > 0),
+            arrow_width: parseFloat(txtArrow.text) || 0,
             font_name: getSelectedFontName(),
             font_size: parseFloat(txtFontSize.text) || 14,
             cyan: parseFloat(txtC.text) || 0,
